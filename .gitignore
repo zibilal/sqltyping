@@ -1,0 +1,11 @@
+# file: ~/.gitignore_global
+.DS_Store
+.idea
+vendor
+microservice_order
+Gopkg.lock
+**/app.yml
+**/app.yaml
+**/*.lock
+app.yaml
+app.yml
