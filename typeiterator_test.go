@@ -351,6 +351,160 @@ func TestTypeIteratorStructBuffer(t *testing.T) {
 	}
 }
 
+func TestTypeIteratorStructBufferSecond(t *testing.T) {
+	t.Log("Testing type iterator input struct with a slice of struct, output bytes buffer")
+	{
+		order := OrderEx{
+			Id:      "o123",
+			Created: time.Now(),
+			Updated: time.Now(),
+			Status:  "OrderCreated",
+			Items: []OrderItem{
+				{
+					Id:       "itm123",
+					ItemName: "XL 2 Giga",
+					Price:    150000,
+				}, {
+					Id:       "itm124",
+					ItemName: "XL 5 Giga",
+					Price:    300000,
+				},
+			},
+		}
+
+		buff := bytes.NewBufferString("")
+		err := TypeIterator(order, buff)
+
+		if err != nil {
+			t.Fatalf("%s expected error nil, got %s", failed, err.Error())
+		} else {
+			t.Logf("%s expected error nil", success)
+		}
+
+		if buff.String() == "" {
+			t.Fatalf("%s expected not empty buff result, got empty buff", failed)
+		} else {
+			t.Logf("%s expected not empty buff result, buff result = %s", success, buff.String())
+		}
+	}
+}
+
+func TestTypeIteratorStructWithSliceToStructWithSlice(t *testing.T) {
+	t.Log("Struct with interface")
+	{
+		order := OrderEx{
+			Id:      "o123",
+			Created: time.Now(),
+			Updated: time.Now(),
+			Status:  "OrderCreated",
+			Items: []OrderItem{
+				{
+					Id:       "itm123",
+					ItemName: "XL 2 Giga",
+					Price:    150000,
+				}, {
+					Id:       "itm124",
+					ItemName: "XL 5 Giga",
+					Price:    300000,
+				},
+			},
+		}
+
+		orderOutput := struct {
+			Id      string
+			Created time.Time
+			Updated time.Time
+			Status  string
+			Items   interface{}
+		}{}
+
+		err := TypeIterator(order, &orderOutput)
+
+		if err != nil {
+			t.Fatalf("%s expected error nil, got %s", failed, err.Error())
+		} else {
+			t.Logf("%s expected error nil", success)
+		}
+
+		if IsEmpty(orderOutput) {
+			t.Fatalf("%s expected orderOutput not empty", failed)
+		} else {
+			b, err := json.MarshalIndent(orderOutput, "", "\t")
+			if err != nil {
+				t.Fatalf("%s expected error nil, got %s", failed, err.Error())
+			}
+			t.Logf("%s expected orderOutput not emtpy, got %s", failed, string(b))
+		}
+	}
+
+	t.Log("Struct with slice of struct")
+	{
+		order := OrderEx{
+			Id:      "o123",
+			Created: time.Now(),
+			Updated: time.Now(),
+			Status:  "OrderCreated",
+			Items: []OrderItem{
+				{
+					Id:       "itm123",
+					ItemName: "XL 2 Giga",
+					Price:    150000,
+				}, {
+					Id:       "itm124",
+					ItemName: "XL 5 Giga",
+					Price:    300000,
+				},
+			},
+		}
+
+		orderOutput := struct {
+			Id      string
+			Created time.Time
+			Updated time.Time
+			Status  string
+			Items   []Item
+		}{}
+
+		err := TypeIterator(order, &orderOutput)
+
+		if err != nil {
+			t.Fatalf("%s expected error nil, got %s", failed, err.Error())
+		} else {
+			t.Logf("%s expected error nil", success)
+		}
+
+		if IsEmpty(orderOutput) {
+			t.Fatalf("%s expected orderOutput not empty", failed)
+		} else {
+			b, err := json.MarshalIndent(orderOutput, "", "\t")
+			if err != nil {
+				t.Fatalf("%s expected error nil, got %s", failed, err.Error())
+			}
+			t.Logf("%s expected orderOutput not emtpy, got %s", success, string(b))
+		}
+	}
+}
+
+type OrderEx struct {
+	Id      string
+	Updated time.Time
+	Created time.Time
+	Status  string
+	Items   []OrderItem
+}
+
+type OrderItem struct {
+	Id       string
+	ItemName string
+	Price    float64
+}
+
+type Item struct {
+	Id       string
+	ItemName string
+	Price    float64
+}
+
 type User struct {
 	Id           string         `sqltype:"id"`
 	Username     string         `sqltype:"username"`

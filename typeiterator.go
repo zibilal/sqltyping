@@ -235,7 +235,7 @@ func TypeIterator(input interface{}, output interface{}) (err error) {
 		} else {
 			if !checkTypes {
 				ibuff := output.(*bytes.Buffer)
-				ibuff.WriteString( " { \"table_name\": \"" + ityp.Name() + "\"")
+				ibuff.WriteString( "{table_name:" + ityp.Name() + "")
 			}
 
 			for i := 0; i < ival.NumField(); i++ {
@@ -265,7 +265,7 @@ func TypeIterator(input interface{}, output interface{}) (err error) {
 					}
 					if fieldName != "" {
 						fieldName = strings.Replace(fieldName, "\"", "", -1)
-						ibuff.WriteString(fmt.Sprintf(", \"column_name\": \"%v\"", fieldName))
+						ibuff.WriteString(fmt.Sprintf(",column_name:%v", fieldName))
 
 						if fin.Type().String() == "time.Time" {
 							dTime := fin.Interface().(time.Time)
@@ -285,8 +285,8 @@ func TypeIterator(input interface{}, output interface{}) (err error) {
 						for j := 0; j < oval.NumField(); j++ {
 							ftout = otyp.Field(j)
 							if itag, otag := ftin.Tag, ftout.Tag; itag != "" && otag != "" {
-								isplit := strings.Split(string(itag), "|")
-								osplit := strings.Split(string(otag), "|")
+								isplit := strings.Split(string(itag), ":")
+								osplit := strings.Split(string(otag), ":")
 								iisplit := strings.Split(isplit[1], ",")
 								oosplit := strings.Split(osplit[1], ",")
 
@@ -299,6 +299,14 @@ func TypeIterator(input interface{}, output interface{}) (err error) {
 
 					if fout.Kind() == reflect.Interface {
 						fout.Set(fin)
+					} else if fin.Type().String() == "time.Time" {
+						if fout.Type().String() == "time.Time" {
+							fout.Set(fin)
+						} else if fout.Kind() == reflect.String {
+							dTime := fin.Interface().(time.Time)
+							str := dTime.Format("2006-01-02 03:04:05")
+							fout.Set(reflect.ValueOf(str))
+						}
 					} else {
 						if fout.IsValid() && fin.IsValid() {
 							iout := reflect.New(fout.Type())
@@ -312,18 +320,38 @@ func TypeIterator(input interface{}, output interface{}) (err error) {
 
 			if !checkTypes {
 				ibuff := output.(*bytes.Buffer)
-				ibuff.WriteString(" }")
+				ibuff.WriteString( "}")
 			}
 		}
 
 		return nil
+	case reflect.Slice:
+		if !checkTypes {
+			obuff := output.(*bytes.Buffer)
+			for i := 0; i < ival.Len(); i++ {
+				iItem := ival.Index(i)
+				TypeIterator(iItem.Interface(), obuff)
+			}
+		} else if oval.Kind() == reflect.Interface {
+			oval.Set(ival)
+		} else if oval.Kind() == reflect.Slice {
+			outSlice := reflect.MakeSlice(reflect.SliceOf(otyp.Elem()), 0, ival.Len())
+			for i := 0; i < ival.Len(); i++ {
+
+				oItem := reflect.New(otyp.Elem())
+				iItem := ival.Index(i)
+				TypeIterator(iItem.Interface(), oItem.Interface())
+				outSlice = reflect.Append(outSlice, oItem.Elem())
+			}
+			oval.Set(outSlice)
+		}
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
 		reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64,
 		reflect.Float32, reflect.Float64, reflect.String:
 
 		if !checkTypes {
 			ibuff := output.(*bytes.Buffer)
-			ibuff.WriteString(fmt.Sprintf("|%v ", ival.Interface()))
+			ibuff.WriteString(fmt.Sprintf("|%v", ival.Interface()))
 		} else {
 			oval.Set(ival)
 		}
