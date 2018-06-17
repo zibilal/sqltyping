@@ -1,16 +1,40 @@
 package sqltyping
 
 import (
+	"bytes"
 	"fmt"
 	"reflect"
-	"bytes"
+	"strconv"
 	"strings"
 	"text/scanner"
-	"strconv"
+)
+
+type offsetstack struct {
+	offsets []int
+	count   int
+}
+
+func (s *offsetstack) push(v int) {
+	s.offsets = append(s.offsets[:s.count], v)
+	s.count++
+}
+
+func (s *offsetstack) pop() int {
+	if s.count == 0 {
+		return 0
+	}
+	s.count--
+	return s.offsets[s.count]
+}
+
+const (
+	SelectQuery = "SELECT"
+	InsertQuery = "INSERT"
+	UpdateQuery = "UPDATE"
 )
 
 type SqlTyping struct {
-	typeQuery     string
+	typeQuery string
 }
 
 func NewSqlTyping(typeQuery string) *SqlTyping {
@@ -30,101 +54,152 @@ func (t *SqlTyping) Typing(input interface{}) ([]string, error) {
 		if err != nil {
 			return []string{}, err
 		}
+		components, err := processBytes(buff.Bytes(), []string{})
 
-		return []string{}, nil
+		results := []string{}
+
+		for _, component := range components {
+			result := t.processInput(component)
+			results = append(results, result)
+		}
+
+		return results, nil
 	default:
 		return []string{}, fmt.Errorf("not supported type %T", input)
 	}
 
 }
 
-func processBytes(buff *bytes.Buffer) ([]string, error) {
+func processBytes(bytesData []byte , components []string)([]string, error) {
+	if len(bytesData) == 0 {
+		return components, nil
+	} else {
+		buff := bytes.NewBuffer(bytesData)
+		var s scanner.Scanner
+		s.Init(buff)
+		pairs := []string{}
 
-	var s scanner.Scanner
-	s.Init(buff)
+		offStack := new(offsetstack)
 
-	openOffsets := []int{}
-	closeOffsets := []int{}
-	components := []string{}
-	pairs := []string{}
-
-	bytesData := buff.Bytes()
-
-	var tok rune
-	for tok != scanner.EOF {
-		tok = s.Scan()
-		if s.TokenText() == "{" {
-			openOffsets = append(openOffsets, s.Position.Column)
-		}
-		if s.TokenText() == "}" {
-			closeOffsets = append(closeOffsets, s.Position.Column)
-		}
-	}
-
-
-	for i := len(openOffsets) - 1; i >= 0; i-- {
-		pairs = append(pairs, fmt.Sprintf("%d,%d", openOffsets[i], closeOffsets[len(closeOffsets)-1-i]))
-	}
-
-	fmt.Println("Pairs", pairs)
-
-	for idx := 0; idx < len(pairs); idx++ {
-		pair := pairs[idx]
-		bytesInside := []byte{}
-		split := strings.Split(pair, ",")
-		num1, _ := strconv.Atoi(split[0])
-		num2, _ := strconv.Atoi(split[1])
-		bytesInside = append(bytesInside, bytesData[num1:num2-2]...)
-		bytesData = append(bytesData[:num1], bytesData[num2:]...)
-		if idx + 1 < len(pairs) {
-			upSplit := strings.Split(pairs[idx+1], ",")
-			upNum1, _ := strconv.Atoi(upSplit[0])
-			upNum2, _ := strconv.Atoi(upSplit[1])
-			upNum2 = upNum2 - 2
-
-			if upNum1 - len(bytesInside) >= 1 {
-				upNum1 = upNum1 - len(bytesInside)
+		var tok rune
+		for ; tok != scanner.EOF; tok = s.Scan() {
+			if s.TokenText() == "{" {
+				offStack.push(s.Position.Column)
 			}
-
-			if upNum2 - len(bytesInside) >= 1 {
-				upNum2 = upNum2 - len(bytesInside)
+			if s.TokenText() == "}" {
+				pairs = append(pairs,
+					fmt.Sprintf("%d,%d", offStack.pop(), s.Position.Column))
 			}
-
-			pairs[idx+1] = fmt.Sprintf("%d,%d", upNum1, upNum2)
 		}
 
-		components = append(components, string(bytesInside))
+		for idx := 0; idx < len(pairs); idx++ {
+			pair := pairs[idx]
+			bytesInside := []byte{}
+			split := strings.Split(pair, ",")
+			num1, _ := strconv.Atoi(split[0])
+			num2, _ := strconv.Atoi(split[1])
+
+			bytesInside = append(bytesInside, bytesData[num1-1:num2]...)
+			bytesData = append(bytesData[:num1-1], bytesData[num2:]...)
+
+			components = append(components, string(bytesInside[1:len(bytesInside)-1]))
+			return processBytes(bytesData, components)
+		}
 	}
 
-	return components, nil
+	return []string{}, nil
 }
 
-func (t *SqlTyping) processInput(input string, name string) string {
+func (t *SqlTyping) processInput(input string) string {
 
 	switch t.typeQuery {
-	case "SELECT":
-		pairs := strings.Split(input, " ")
-		columns := []string {}
-		wheres := []string {}
-		for _, pair := range pairs {
-			if pair != "" {
-				values := strings.Split(pair, "|")
-				columns = append(columns, values[0])
-				if len(values) == 2 && values[1] != "" {
-					wheres = append(wheres, fmt.Sprintf("%s = '%s'", values[0], values[1]) )
-				}
-			}
-		}
-
-		baseQuery := fmt.Sprintf("SELECT %s FROM %s", strings.Join(columns,", "), name)
-		if len(wheres) > 0 {
-			baseQuery = fmt.Sprintf("%s WHERE %s", baseQuery, strings.Join(wheres, " AND "))
-		}
-
-		return baseQuery
-	case "INSERT":
-	case "UPDATE":
+	case SelectQuery:
+		return processSelect(input)
+	case InsertQuery:
+		return processInsert(input)
+	case UpdateQuery:
+		return processUpdate(input)
 	}
 
 	return ""
+}
+
+func processSelect(input string) string {
+	splitComma := strings.Split(input, ",")
+	fromClause := ""
+	columns := []string{}
+	wheres := []string{}
+
+	for _, byComma := range splitComma {
+		pair := strings.Split(byComma,":")
+		switch pair[0] {
+		case "table_name":
+			fromClause = strings.ToLower(pair[1]) + "s"
+		case "column_name":
+			splitValue := strings.Split(pair[1], "|")
+			if len(splitValue) == 2 {
+				columns = append(columns, splitValue[0])
+				if splitValue[1] != "" {
+					wheres = append(wheres, fmt.Sprintf("%s='%s'", splitValue[0], splitValue[1]))
+				}
+			}
+		}
+	}
+
+	base := fmt.Sprintf("SELECT %s FROM %s", strings.Join(columns, ","), fromClause)
+	buff := bytes.NewBufferString(base)
+	if len(wheres) > 0 {
+		buff.WriteString(" WHERE " + strings.Join(wheres, " AND "))
+	}
+
+	return buff.String()
+}
+
+func processInsert(input string) string {
+	intos := []string{}
+	tableName := ""
+	values := []string{}
+
+	splitComma := strings.Split(input, ",")
+	for _, byComma := range splitComma {
+		pair := strings.Split(byComma, ":")
+		switch pair[0] {
+		case "table_name":
+			tableName = strings.ToLower(pair[1] + "s")
+		case "column_name":
+			splitValue := strings.Split(pair[1], "|")
+			if len(splitValue) == 2 {
+				intos = append(intos, splitValue[0])
+				values = append(values, "'" + splitValue[1] + "'")
+			}
+		}
+	}
+
+	return fmt.Sprintf("INSERT INTO %s (%s) VALUES (%s)", tableName, strings.Join(intos, ","), strings.Join(values, ","))
+}
+
+func processUpdate(input string) string {
+	setColumns := []string{}
+	where := ""
+	tableName := ""
+
+	splitComma := strings.Split(input, ",")
+	for _, byComma := range splitComma {
+		pair := strings.Split(byComma, ":")
+		switch pair[0] {
+		case "table_name":
+			tableName = strings.ToLower(pair[1] + "s")
+		case "column_name":
+			splitValue := strings.Split(pair[1], "|")
+			if len(splitValue) == 2 {
+				if strings.ToLower(splitValue[0]) == "id" {
+					where = fmt.Sprintf("%s='%s'", splitValue[0], splitValue[1])
+				} else {
+					setColumns = append(setColumns, fmt.Sprintf("%s='%s'", splitValue[0], splitValue[1]))
+				}
+			}
+		}
+	}
+
+	return fmt.Sprintf("UPDATE %s SET %s WHERE %s", tableName, strings.Join(setColumns, ","), where)
 }
