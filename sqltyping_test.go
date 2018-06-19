@@ -169,3 +169,48 @@ func TestScanWithStructOfSlice(t *testing.T) {
 		}
 	}
 }
+
+func TestConvertCamelCaseToSnakeCase (t *testing.T) {
+
+	t.Log("1 conversion")
+	{
+		input1 := "TestConvertCamelCaseToSnakeCase"
+		expected1 := "test_convert_camel_case_to_snake_cases"
+
+		str := convertCamelCaseToSnakeCase(input1)
+
+		if str == expected1 {
+			t.Logf("%s expected result = expected1 : %s", success, expected1)
+		} else {
+			t.Errorf("%s expected result = expected1 : got %s", failed, str)
+		}
+	}
+
+	t.Log("2 conversion")
+	{
+		input1 := "testConvertCamelCaseToSnakeCase"
+		expected1 := "test_convert_camel_case_to_snake_cases"
+
+		str := convertCamelCaseToSnakeCase(input1)
+
+		if str == expected1 {
+			t.Logf("%s expected result = expected1 : %s", success, expected1)
+		} else {
+			t.Errorf("%s expected result = expected1 : got %s", failed, str)
+		}
+	}
+
+	t.Log("3 conversion")
+	{
+		input1 := "test&*4ConvertCamelCaseToSnakeCasess34ssd"
+		expected1 := "test_convert_camel_case_to_snake_casess34ssds"
+
+		str := convertCamelCaseToSnakeCase(input1)
+
+		if str == expected1 {
+			t.Logf("%s expected result = expected1 : %s", success, expected1)
+		} else {
+			t.Errorf("%s expected result = expected1 : got %s", failed, str)
+		}
+	}
+}

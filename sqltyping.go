@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 	"text/scanner"
+	"regexp"
 )
 
 type offsetstack struct {
@@ -134,7 +135,7 @@ func processSelect(input string) string {
 		pair := strings.Split(byComma,":")
 		switch pair[0] {
 		case "table_name":
-			fromClause = strings.ToLower(pair[1]) + "s"
+			fromClause = convertCamelCaseToSnakeCase(pair[1])
 		case "column_name":
 			splitValue := strings.Split(pair[1], "|")
 			if len(splitValue) == 2 {
@@ -165,7 +166,7 @@ func processInsert(input string) string {
 		pair := strings.Split(byComma, ":")
 		switch pair[0] {
 		case "table_name":
-			tableName = strings.ToLower(pair[1] + "s")
+			tableName = convertCamelCaseToSnakeCase(pair[1])
 		case "column_name":
 			splitValue := strings.Split(pair[1], "|")
 			if len(splitValue) == 2 {
@@ -188,7 +189,7 @@ func processUpdate(input string) string {
 		pair := strings.Split(byComma, ":")
 		switch pair[0] {
 		case "table_name":
-			tableName = strings.ToLower(pair[1] + "s")
+			tableName = convertCamelCaseToSnakeCase(pair[1])
 		case "column_name":
 			splitValue := strings.Split(pair[1], "|")
 			if len(splitValue) == 2 {
@@ -202,4 +203,21 @@ func processUpdate(input string) string {
 	}
 
 	return fmt.Sprintf("UPDATE %s SET %s WHERE %s", tableName, strings.Join(setColumns, ","), where)
+}
+
+func convertCamelCaseToSnakeCase(input string) string {
+
+	re := regexp.MustCompile("[A-Za-z0-9][a-z0-9]+")
+	strs := re.FindAllString(input, -1)
+	buff := bytes.NewBufferString("")
+	for idx, str := range strs {
+		if idx == 0 {
+			buff.WriteString(strings.ToLower(str))
+		} else {
+			buff.WriteString("_" + strings.ToLower(str))
+		}
+	}
+	buff.WriteString("s")
+
+	return buff.String()
 }
