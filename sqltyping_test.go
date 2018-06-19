@@ -80,6 +80,23 @@ func TestSqlTypingProcessInsert(t *testing.T) {
 			}
 		}
 	}
+	t.Log("Testing SqlTyping.processInsert with empty id")
+	{
+		dataInput := "table_name:User,column_name:id|,column_name:username|example,column_name:first_name|first,column_name:last_name|last,column_name:email|first.last@example.com,column_name:secret_detail"
+		expectedQuery := `INSERT INTO users (username,first_name,last_name,email) VALUES ('example','first','last','first.last@example.com')`
+		result := processInsert(dataInput)
+
+		if result == "" {
+			t.Fatalf("%s expected result is not empty", failed)
+		} else {
+
+			if result == expectedQuery {
+				t.Logf("%s expected result = %s", success, expectedQuery)
+			} else {
+				t.Fatalf("%s expected result = %s, got %s", failed, expectedQuery, result)
+			}
+		}
+	}
 }
 
 func TestSqlTypingProcessUpdate(t *testing.T) {
@@ -87,6 +104,23 @@ func TestSqlTypingProcessUpdate(t *testing.T) {
 	{
 		dataInput := "table_name:User,column_name:id|bhf1234584,column_name:username|example,column_name:first_name|first,column_name:last_name|last,column_name:email|first.last@example.com,column_name:secret_detail"
 		expectedQuery := `UPDATE users SET username='example',first_name='first',last_name='last',email='first.last@example.com' WHERE id='bhf1234584'`
+		result := processUpdate(dataInput)
+
+		if result == "" {
+			t.Fatalf("%s expected result is not empty", failed)
+		} else {
+
+			if result == expectedQuery {
+				t.Logf("%s expected result = %s", success, expectedQuery)
+			} else {
+				t.Fatalf("%s expected result = %s, got %s", failed, expectedQuery, result)
+			}
+		}
+	}
+	t.Log("Testing SqlTyping.processUpdate, with some empty data")
+	{
+		dataInput := "table_name:User,column_name:id|,column_name:username|example,column_name:first_name|,column_name:last_name|last,column_name:email|first.last@example.com,column_name:secret_detail"
+		expectedQuery := `UPDATE users SET username='example',last_name='last',email='first.last@example.com'`
 		result := processUpdate(dataInput)
 
 		if result == "" {

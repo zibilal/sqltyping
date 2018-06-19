@@ -169,7 +169,7 @@ func processInsert(input string) string {
 			tableName = convertCamelCaseToSnakeCase(pair[1])
 		case "column_name":
 			splitValue := strings.Split(pair[1], "|")
-			if len(splitValue) == 2 {
+			if len(splitValue) == 2 && splitValue[1] != "" {
 				intos = append(intos, splitValue[0])
 				values = append(values, "'" + splitValue[1] + "'")
 			}
@@ -192,9 +192,9 @@ func processUpdate(input string) string {
 			tableName = convertCamelCaseToSnakeCase(pair[1])
 		case "column_name":
 			splitValue := strings.Split(pair[1], "|")
-			if len(splitValue) == 2 {
+			if len(splitValue) == 2 && splitValue[1] != ""{
 				if strings.ToLower(splitValue[0]) == "id" {
-					where = fmt.Sprintf("%s='%s'", splitValue[0], splitValue[1])
+					where = fmt.Sprintf(" WHERE %s='%s'", splitValue[0], splitValue[1])
 				} else {
 					setColumns = append(setColumns, fmt.Sprintf("%s='%s'", splitValue[0], splitValue[1]))
 				}
@@ -202,7 +202,7 @@ func processUpdate(input string) string {
 		}
 	}
 
-	return fmt.Sprintf("UPDATE %s SET %s WHERE %s", tableName, strings.Join(setColumns, ","), where)
+	return fmt.Sprintf("UPDATE %s SET %s%s", tableName, strings.Join(setColumns, ","), where)
 }
 
 func convertCamelCaseToSnakeCase(input string) string {
