@@ -13,7 +13,7 @@ const (
 func TestSqlTyping(t *testing.T) {
 	t.Log("Testing sql typing")
 	{
-		expectedSql := `SELECT id,username,first_name,last_name,email FROM users WHERE id='bhf1234584'`
+		expectedSql := `SELECT id,username,first_name,last_name,email FROM user WHERE id='bhf1234584'`
 
 		user := User{
 			Id: "bhf1234584",
@@ -46,7 +46,7 @@ func TestSqlTypingProcessSelect(t *testing.T) {
 	t.Log("Testing SqlTyping.processSelect")
 	{
 		dataInput := "table_name:User,column_name:id|bhf1234584,column_name:username|,column_name:first_name|,column_name:last_name|,column_name:email|,column_name:secret_detail"
-		expectedQuery := `SELECT id,username,first_name,last_name,email FROM users WHERE id='bhf1234584'`
+		expectedQuery := `SELECT id,username,first_name,last_name,email FROM user WHERE id='bhf1234584'`
 		result := processSelect(dataInput)
 
 		if result == "" {
@@ -66,7 +66,7 @@ func TestSqlTypingProcessInsert(t *testing.T) {
 	t.Log("Testing SqlTyping.processInsert")
 	{
 		dataInput := "table_name:User,column_name:id|bhf1234584,column_name:username|example,column_name:first_name|first,column_name:last_name|last,column_name:email|first.last@example.com,column_name:secret_detail"
-		expectedQuery := `INSERT INTO users (id,username,first_name,last_name,email) VALUES ('bhf1234584','example','first','last','first.last@example.com')`
+		expectedQuery := `INSERT INTO user (id,username,first_name,last_name,email) VALUES ('bhf1234584','example','first','last','first.last@example.com')`
 		result := processInsert(dataInput)
 
 		if result == "" {
@@ -83,7 +83,7 @@ func TestSqlTypingProcessInsert(t *testing.T) {
 	t.Log("Testing SqlTyping.processInsert with empty id")
 	{
 		dataInput := "table_name:User,column_name:id|,column_name:username|example,column_name:first_name|first,column_name:last_name|last,column_name:email|first.last@example.com,column_name:secret_detail"
-		expectedQuery := `INSERT INTO users (username,first_name,last_name,email) VALUES ('example','first','last','first.last@example.com')`
+		expectedQuery := `INSERT INTO user (username,first_name,last_name,email) VALUES ('example','first','last','first.last@example.com')`
 		result := processInsert(dataInput)
 
 		if result == "" {
@@ -103,7 +103,7 @@ func TestSqlTypingProcessUpdate(t *testing.T) {
 	t.Log("Testing SqlTyping.processUpdate")
 	{
 		dataInput := "table_name:User,column_name:id|bhf1234584,column_name:username|example,column_name:first_name|first,column_name:last_name|last,column_name:email|first.last@example.com,column_name:secret_detail"
-		expectedQuery := `UPDATE users SET username='example',first_name='first',last_name='last',email='first.last@example.com' WHERE id='bhf1234584'`
+		expectedQuery := `UPDATE user SET username='example',first_name='first',last_name='last',email='first.last@example.com' WHERE id='bhf1234584'`
 		result := processUpdate(dataInput)
 
 		if result == "" {
@@ -120,7 +120,7 @@ func TestSqlTypingProcessUpdate(t *testing.T) {
 	t.Log("Testing SqlTyping.processUpdate, with some empty data")
 	{
 		dataInput := "table_name:User,column_name:id|,column_name:username|example,column_name:first_name|,column_name:last_name|last,column_name:email|first.last@example.com,column_name:secret_detail"
-		expectedQuery := `UPDATE users SET username='example',last_name='last',email='first.last@example.com'`
+		expectedQuery := `UPDATE user SET username='example',last_name='last',email='first.last@example.com'`
 		result := processUpdate(dataInput)
 
 		if result == "" {
@@ -209,7 +209,7 @@ func TestConvertCamelCaseToSnakeCase (t *testing.T) {
 	t.Log("1 conversion")
 	{
 		input1 := "TestConvertCamelCaseToSnakeCase"
-		expected1 := "test_convert_camel_case_to_snake_cases"
+		expected1 := "test_convert_camel_case_to_snake_case"
 
 		str := convertCamelCaseToSnakeCase(input1)
 
@@ -223,7 +223,7 @@ func TestConvertCamelCaseToSnakeCase (t *testing.T) {
 	t.Log("2 conversion")
 	{
 		input1 := "testConvertCamelCaseToSnakeCase"
-		expected1 := "test_convert_camel_case_to_snake_cases"
+		expected1 := "test_convert_camel_case_to_snake_case"
 
 		str := convertCamelCaseToSnakeCase(input1)
 
@@ -237,7 +237,7 @@ func TestConvertCamelCaseToSnakeCase (t *testing.T) {
 	t.Log("3 conversion")
 	{
 		input1 := "test&*4ConvertCamelCaseToSnakeCasess34ssd"
-		expected1 := "test_convert_camel_case_to_snake_casess34ssds"
+		expected1 := "test_convert_camel_case_to_snake_casess34ssd"
 
 		str := convertCamelCaseToSnakeCase(input1)
 

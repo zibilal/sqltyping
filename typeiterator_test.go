@@ -433,7 +433,7 @@ func TestTypeIteratorStructWithSliceToStructWithSlice(t *testing.T) {
 			if err != nil {
 				t.Fatalf("%s expected error nil, got %s", failed, err.Error())
 			}
-			t.Logf("%s expected orderOutput not emtpy, got %s", failed, string(b))
+			t.Logf("%s expected orderOutput not emtpy, got %s", success, string(b))
 		}
 	}
 

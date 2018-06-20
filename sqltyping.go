@@ -217,7 +217,6 @@ func convertCamelCaseToSnakeCase(input string) string {
 			buff.WriteString("_" + strings.ToLower(str))
 		}
 	}
-	buff.WriteString("s")
 
 	return buff.String()
 }
