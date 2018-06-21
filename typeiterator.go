@@ -357,7 +357,12 @@ func TypeIterator(input interface{}, output interface{}) (err error) {
 			ibuff := output.(*bytes.Buffer)
 			ibuff.WriteString(fmt.Sprintf("|%v", ival.Interface()))
 		} else {
-			oval.Set(ival)
+			if oval.Kind() == ival.Kind() {
+				oval.Set(ival)
+			} else {
+				err = fmt.Errorf("input type %T cannot by set in output of type %T", ival.Interface(), oval.Interface())
+				return
+			}
 		}
 
 		return nil
