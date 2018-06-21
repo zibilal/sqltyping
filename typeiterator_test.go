@@ -485,6 +485,98 @@ func TestTypeIteratorStructWithSliceToStructWithSlice(t *testing.T) {
 	}
 }
 
+func TestTypeIteratorWithMultipleTaggedStruct(t *testing.T) {
+	t.Log("Test With multiple tag")
+	{
+		itemMulti := OrderItemMulti{
+			Attributes:    "{\"key\": \"Nomor Telephone\", \"value\": \"0818007788\"}",
+			Description:   "Test Description",
+			ItemImage:     "http://example.com/static/image01.png",
+			Commission:    250000,
+			Name:          "XL 5Giga",
+			ProductCode:   "XC022",
+			Price:         125000,
+			Quantity:      2,
+			ResellerPrice: 150000,
+			ItemID:        1,
+		}
+
+		outputMulti := ItemMulti{}
+
+		err := TypeIterator(itemMulti, &outputMulti)
+
+		if err != nil {
+			t.Fatalf("%s expected error nil, got %s", failed, err.Error())
+		} else {
+			t.Logf("%s expected error nil", success)
+			b, err := json.MarshalIndent(outputMulti, "", "\t")
+			if err != nil {
+				t.Fatalf("%s expected error nil, got %s", failed, err.Error())
+			} else {
+				t.Logf("Result:\n%s", string(b))
+			}
+		}
+	}
+
+	t.Log("Test With multiple tag, on bytes.Buffer")
+	{
+		itemMulti := OrderItemMulti{
+			Attributes:    "{\"key\": \"Nomor Telephone\", \"value\": \"0818007788\"}",
+			Description:   "Test Description",
+			ItemImage:     "http://example.com/static/image01.png",
+			Commission:    250000,
+			Name:          "XL 5Giga",
+			ProductCode:   "XC022",
+			Price:         125000,
+			Quantity:      2,
+			ResellerPrice: 150000,
+			ItemID:        1,
+		}
+
+		buff := bytes.NewBufferString("")
+
+		err := TypeIterator(itemMulti, buff)
+
+		if err != nil {
+			t.Fatalf("%s expected error nil, got %s", failed, err.Error())
+		} else {
+			t.Logf("%s expected error nil", success)
+		}
+
+		if buff.String() == "" {
+			t.Fatalf("%s expected buff is not empty, got empty", failed)
+		} else {
+			t.Logf("%s expected buff is not empty, result: %s", success, buff.String())
+		}
+	}
+}
+
+type OrderItemMulti struct {
+	Attributes    string  `json:"attributes" transform:"attr"`
+	Description   string  `json:"description" bson:"description"`
+	ItemImage     string  `json:"item_image" bson:"item_image" transform:"item_image"`
+	Commission    float64 `json:"commission" bson:"commission" transform:"commission"`
+	Name          string  `json:"name" bson:"name" transform:"item_name"`
+	ProductCode   string  `json:"product_code" bson:"product_code" transform:"item_reference_id"`
+	Price         float64 `json:"price" bson:"price" transform:"price"`
+	Quantity      int     `json:"quantity" bson:"quantity" transform:"quantity"`
+	ResellerPrice float64 `json:"reseller_price" bson:"reseller_price"`
+	ItemID        uint64  `json:"item_id" bson:"item_id" transform:"item_id"`
+}
+
+type ItemMulti struct {
+	Attr          string  `json:"attributes" transform:"attr"`
+	Description   string  `json:"description" bson:"description"`
+	ItemImage     string  `json:"item_image" bson:"item_image" transform:"item_image"`
+	Commission    float64 `json:"commission" bson:"commission" transform:"commission"`
+	Name          string  `json:"name" bson:"name" transform:"item_name"`
+	ProductCode   string  `json:"product_code" bson:"product_code" transform:"item_reference_id"`
+	Price         float64 `json:"price" bson:"price" transform:"price"`
+	Quantity      int     `json:"quantity" bson:"quantity" transform:"quantity"`
+	ResellerPrice float64 `json:"reseller_price" bson:"reseller_price"`
+	ItemID        uint64  `json:"item_id" bson:"item_id" transform:"item_id"`
+}
+
 type OrderEx struct {
 	Id      string
 	Updated time.Time

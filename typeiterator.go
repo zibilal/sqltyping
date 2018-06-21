@@ -250,14 +250,18 @@ func TypeIterator(input interface{}, output interface{}) (err error) {
 
 					fieldName := ""
 					if itag != "" {
-						isplit := strings.Split(string(itag), ":")
-						if len(isplit) == 2 && isplit[1] != "" {
-							isplit1 := strings.Replace(isplit[1], "\"", "", -1)
-							iisplit := strings.Split(isplit1, ",")
-							if len(iisplit) == 2 && iisplit[1] == "omitempty" {
-								fieldName = ""
-							} else {
-								fieldName = iisplit[0]
+						// always find the first set of tag
+						bySpace := strings.Split(string(itag), " ")
+						for j := 0; j < len(bySpace); j++ {
+							isplit := strings.Split(bySpace[j], ":")
+							if len(isplit) == 2 && isplit[1] != "" {
+								isplit1 := strings.Replace(isplit[1], "\"", "", -1)
+								iisplit := strings.Split(isplit1, ",")
+								if len(iisplit) == 2 && iisplit[1] == "omitempty" {
+									fieldName = ""
+								} else {
+									fieldName = iisplit[0]
+								}
 							}
 						}
 					} else {
@@ -290,7 +294,7 @@ func TypeIterator(input interface{}, output interface{}) (err error) {
 								iisplit := strings.Split(isplit[1], ",")
 								oosplit := strings.Split(osplit[1], ",")
 
-								if len(isplit) == 2 && len(osplit) == 2 && iisplit[0] == oosplit[0] {
+								if len(isplit) >= 2 && len(osplit) >= 2 && iisplit[0] == oosplit[0] {
 									fout = oval.Field(i)
 								}
 							}
