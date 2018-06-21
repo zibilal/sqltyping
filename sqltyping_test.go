@@ -47,7 +47,8 @@ func TestSqlTypingProcessSelect(t *testing.T) {
 	{
 		dataInput := "table_name:User,column_name:id|bhf1234584,column_name:username|,column_name:first_name|,column_name:last_name|,column_name:email|,column_name:secret_detail"
 		expectedQuery := `SELECT id,username,first_name,last_name,email FROM user WHERE id='bhf1234584'`
-		result := processSelect(dataInput)
+		typing := NewSqlTyping("SELECT")
+		result := typing.processSelect(dataInput)
 
 		if result == "" {
 			t.Fatalf("%s expected result is not empty", failed)
@@ -67,7 +68,8 @@ func TestSqlTypingProcessInsert(t *testing.T) {
 	{
 		dataInput := "table_name:User,column_name:id|bhf1234584,column_name:username|example,column_name:first_name|first,column_name:last_name|last,column_name:email|first.last@example.com,column_name:secret_detail"
 		expectedQuery := `INSERT INTO user (id,username,first_name,last_name,email) VALUES ('bhf1234584','example','first','last','first.last@example.com')`
-		result := processInsert(dataInput)
+		typing := NewSqlTyping("INSERT")
+		result := typing.processInsert(dataInput)
 
 		if result == "" {
 			t.Fatalf("%s expected result is not empty", failed)
@@ -84,7 +86,8 @@ func TestSqlTypingProcessInsert(t *testing.T) {
 	{
 		dataInput := "table_name:User,column_name:id|,column_name:username|example,column_name:first_name|first,column_name:last_name|last,column_name:email|first.last@example.com,column_name:secret_detail"
 		expectedQuery := `INSERT INTO user (username,first_name,last_name,email) VALUES ('example','first','last','first.last@example.com')`
-		result := processInsert(dataInput)
+		typing := NewSqlTyping("INSERT")
+		result := typing.processInsert(dataInput)
 
 		if result == "" {
 			t.Fatalf("%s expected result is not empty", failed)
@@ -104,7 +107,8 @@ func TestSqlTypingProcessUpdate(t *testing.T) {
 	{
 		dataInput := "table_name:User,column_name:id|bhf1234584,column_name:username|example,column_name:first_name|first,column_name:last_name|last,column_name:email|first.last@example.com,column_name:secret_detail"
 		expectedQuery := `UPDATE user SET username='example',first_name='first',last_name='last',email='first.last@example.com' WHERE id='bhf1234584'`
-		result := processUpdate(dataInput)
+		typing := NewSqlTyping("INSERT")
+		result := typing.processUpdate(dataInput)
 
 		if result == "" {
 			t.Fatalf("%s expected result is not empty", failed)
@@ -121,7 +125,28 @@ func TestSqlTypingProcessUpdate(t *testing.T) {
 	{
 		dataInput := "table_name:User,column_name:id|,column_name:username|example,column_name:first_name|,column_name:last_name|last,column_name:email|first.last@example.com,column_name:secret_detail"
 		expectedQuery := `UPDATE user SET username='example',last_name='last',email='first.last@example.com'`
-		result := processUpdate(dataInput)
+		typing := NewSqlTyping("UPDATE")
+		result := typing.processUpdate(dataInput)
+
+		if result == "" {
+			t.Fatalf("%s expected result is not empty", failed)
+		} else {
+
+			if result == expectedQuery {
+				t.Logf("%s expected result = %s", success, expectedQuery)
+			} else {
+				t.Fatalf("%s expected result = %s, got %s", failed, expectedQuery, result)
+			}
+		}
+	}
+
+	t.Log("Testing SqlTyping.processUpdate, with decided where column name")
+	{
+		dataInput := "table_name:User,column_name:id|,column_name:username|example,column_name:first_name|,column_name:last_name|last,column_name:email|first.last@example.com,column_name:secret_detail"
+		expectedQuery := `UPDATE user SET last_name='last',email='first.last@example.com' WHERE username='example'`
+		typing := NewSqlTyping("UPDATE")
+		typing.SetUpdateKey("username")
+		result := typing.processUpdate(dataInput)
 
 		if result == "" {
 			t.Fatalf("%s expected result is not empty", failed)

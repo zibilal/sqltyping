@@ -4,10 +4,10 @@ import (
 	"bytes"
 	"fmt"
 	"reflect"
+	"regexp"
 	"strconv"
 	"strings"
 	"text/scanner"
-	"regexp"
 )
 
 type offsetstack struct {
@@ -35,13 +35,18 @@ const (
 )
 
 type SqlTyping struct {
-	typeQuery string
+	typeQuery    string
+	updateKey string
 }
 
 func NewSqlTyping(typeQuery string) *SqlTyping {
 	s := new(SqlTyping)
 	s.typeQuery = typeQuery
 	return s
+}
+
+func (t *SqlTyping) SetUpdateKey(updateKey string) {
+	t.updateKey = updateKey
 }
 
 func (t *SqlTyping) Typing(input interface{}) ([]string, error) {
@@ -71,7 +76,7 @@ func (t *SqlTyping) Typing(input interface{}) ([]string, error) {
 
 }
 
-func processBytes(bytesData []byte , components []string)([]string, error) {
+func processBytes(bytesData []byte, components []string) ([]string, error) {
 	if len(bytesData) == 0 {
 		return components, nil
 	} else {
@@ -115,24 +120,24 @@ func (t *SqlTyping) processInput(input string) string {
 
 	switch t.typeQuery {
 	case SelectQuery:
-		return processSelect(input)
+		return t.processSelect(input)
 	case InsertQuery:
-		return processInsert(input)
+		return t.processInsert(input)
 	case UpdateQuery:
-		return processUpdate(input)
+		return t.processUpdate(input)
 	}
 
 	return ""
 }
 
-func processSelect(input string) string {
+func (t *SqlTyping) processSelect(input string) string {
 	splitComma := strings.Split(input, ",")
 	fromClause := ""
 	columns := []string{}
 	wheres := []string{}
 
 	for _, byComma := range splitComma {
-		pair := strings.Split(byComma,":")
+		pair := strings.Split(byComma, ":")
 		switch pair[0] {
 		case "table_name":
 			fromClause = convertCamelCaseToSnakeCase(pair[1])
@@ -156,7 +161,7 @@ func processSelect(input string) string {
 	return buff.String()
 }
 
-func processInsert(input string) string {
+func (t *SqlTyping) processInsert(input string) string {
 	intos := []string{}
 	tableName := ""
 	values := []string{}
@@ -171,7 +176,7 @@ func processInsert(input string) string {
 			splitValue := strings.Split(pair[1], "|")
 			if len(splitValue) == 2 && splitValue[1] != "" {
 				intos = append(intos, splitValue[0])
-				values = append(values, "'" + splitValue[1] + "'")
+				values = append(values, "'"+splitValue[1]+"'")
 			}
 		}
 	}
@@ -179,9 +184,10 @@ func processInsert(input string) string {
 	return fmt.Sprintf("INSERT INTO %s (%s) VALUES (%s)", tableName, strings.Join(intos, ","), strings.Join(values, ","))
 }
 
-func processUpdate(input string) string {
+func (t *SqlTyping) processUpdate(input string) string {
 	setColumns := []string{}
 	where := ""
+
 	tableName := ""
 
 	splitComma := strings.Split(input, ",")
@@ -192,9 +198,13 @@ func processUpdate(input string) string {
 			tableName = convertCamelCaseToSnakeCase(pair[1])
 		case "column_name":
 			splitValue := strings.Split(pair[1], "|")
-			if len(splitValue) == 2 && splitValue[1] != ""{
-				if strings.ToLower(splitValue[0]) == "id" {
-					where = fmt.Sprintf(" WHERE %s='%s'", splitValue[0], splitValue[1])
+			if len(splitValue) == 2 && splitValue[1] != "" {
+				if strings.ToLower(splitValue[0]) == "id" || splitValue[0] == t.updateKey {
+					if where == "" {
+						where = fmt.Sprintf(" WHERE %s='%s'", splitValue[0], splitValue[1])
+					} else {
+						where += where + fmt.Sprintf(" AND %s='%s'", splitValue[0], splitValue[1])
+					}
 				} else {
 					setColumns = append(setColumns, fmt.Sprintf("%s='%s'", splitValue[0], splitValue[1]))
 				}
