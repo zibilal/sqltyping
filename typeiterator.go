@@ -54,7 +54,7 @@ func TypeIterator(input interface{}, output interface{}) (err error) {
 						}
 					}
 
-					if checkTypes && ( foval.Type().String() == "interface {}" || foval.Type().String() == mival.Type().String() ){
+					if checkTypes && mival.IsValid() && foval.IsValid() && ( foval.Type().String() == "interface {}" || foval.Type().String() == mival.Type().String() ){
 						foval.Set(mival)
 					} else if !checkTypes {
 						obuff := output.(*bytes.Buffer)
