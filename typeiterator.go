@@ -44,7 +44,7 @@ func TypeIterator(input interface{}, output interface{}) (err error) {
 
 							tmptag := tmptyp.Tag
 							if tmptag != "" {
-								osplit := strings.Split(string(tmptag), "|")
+								osplit := strings.Split(string(tmptag), ":")
 								oosplit := strings.Split(osplit[1], ",")
 
 								if k.String() == oosplit[0] {
