@@ -3,8 +3,10 @@ package sqltyping
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"testing"
 	"time"
+	"strconv"
 )
 
 func TestTypeIterator(t *testing.T) {
@@ -549,6 +551,132 @@ func TestTypeIteratorWithMultipleTaggedStruct(t *testing.T) {
 			t.Logf("%s expected buff is not empty, result: %s", success, buff.String())
 		}
 	}
+}
+
+func TestMapTypedonTypeIterator(t *testing.T) {
+	t.Log("Testing TypeIterator on Map input")
+	{
+		dataString := ` {"_id" : {"$oid" : "5b2ca6d5fc0eab2244d31567"},"aggregate_id" : "000000010","created_at" : {"$date" : 1529652949638},"updated_at" : {"$date" : 1529652949638},"events" : [{"event_id" : "b363a221-3893-44e6-b08e-35c3ff3bfe6d","reference" : "201806220235490045346127","event_type" : "OrderCreated","aggregate_id" : "000000010","created_at" : {"$date" : 1529652949638},"updated_at" : {"$date" : 1529652949638},"version" : 1,"payload" : {"created_at" : {"$date" : 1529652949638},"expired_date" : {"$date" : 1529652949638},"customer_id" : {"$numberLong" : "123455676"},"campaign_id" : "","id" : "000000010","reference" : "201806220235490045346127","shipment_type" : 0,"shipping_cost" : 0.0,"status" : "Order Created","subtotal_price" : 0.0,"user_id" : {"$numberLong" : "12445"},"vendor_id" : {"$numberLong" : "15544"},"order_items" : [{"attributes" : "{\"Customer\":{\"cellphone_number\":\"0818780077\"},\"PurchaseReferral\":{\"action\":\"pulsa\"}}","description" : "XL 5 giga Ultimate Internate","item_image" : "","commission" : 3500.0,"name" : "","product_code" : "C443243234","price" : 25000.0,"quantity" : 2,"reseller_price" : 26000.0,"item_id" : {"$numberLong" : "15540"}}, {"attributes" : "{\"Customer\":{\"cellphone_number\":\"0812780077\"},\"PurchaseReferral\":{\"action\":\"pulsa\"}}","description" : "Telkomsel flash 5 giga Ultimate Internate","item_image" : "","commission" : 3500.0,"name" : "","product_code" : "C443243234","price" : 25000.0,"quantity" : 2,"reseller_price" : 26000.0,"item_id" : {"$numberLong" : "15540"}}],"agent_id" : {"$numberLong" : "0"},"device_id" : "5566478997710","total_commission" : 0.0,"shipping_trx_id" : "","channel" : "","total_price" : 0.0,"payment_type" : "","merchant_trx_id" : "","cart_id" : ""}}]}`
+		dataMap := make(map[string]interface{})
+
+		err := json.Unmarshal([]byte(dataString), &dataMap)
+		if err != nil {
+			t.Fatalf("%s expected error nil, got %s", failed, err.Error())
+		} else {
+			t.Logf("%s expected error nil", success)
+		}
+
+		dataAggregate := OrderAggregate{}
+		handleDateTag := func(input interface{}) (interface{}, error) {
+			if minput, ok := input.(map[string]interface{}); ok {
+				d, found := minput["$date"]
+				if found {
+					if dfloat64, ok := d.(float64); ok {
+						dint64 := int64(dfloat64) / 1000
+
+						return time.Unix(dint64, 0), nil
+					}
+				}
+			}
+
+			return nil, fmt.Errorf("unable to handle data: %v", input)
+		}
+
+		handleIdTag := func(input interface{}) (interface{}, error) {
+			if minput, ok := input.(map[string]interface{}); ok {
+				s, found := minput["$oid"]
+				if found {
+					if str, ok := s.(string); ok {
+						return str, nil
+					}
+				}
+			}
+
+			return nil, fmt.Errorf("unable to handle data: %v", input)
+		}
+
+		handleLongTag := func(input interface{}) (interface{}, error) {
+			if minput, ok := input.(map[string]interface{}); ok {
+				d, found := minput["$numberLong"]
+				if found {
+
+					if dstring, ok := d.(string); ok {
+						return strconv.ParseUint(dstring, 10, 64)
+					}
+				}
+			}
+
+			return nil, fmt.Errorf("unable to handle data: %v", input)
+		}
+		err = TypeIterator(dataMap, &dataAggregate, handleDateTag, handleIdTag, handleLongTag)
+		if err != nil {
+			t.Fatalf("%s expected error nil, got %s", failed, err.Error())
+		} else {
+			t.Logf("%s expected error nil", success)
+			b, err := json.MarshalIndent(dataAggregate, "", "\t")
+			if err != nil {
+				t.Fatalf("%s expected error nil, got %s", failed, err.Error())
+			} else {
+				t.Logf("RESULT: %s", string(b))
+			}
+		}
+	}
+}
+
+type OrderAggregate struct {
+	AggregateId string       `bson:"aggregate_id" json:"aggregate_id"`
+	CreatedAt   time.Time    `bson:"created_at" json:"created_at"`
+	UpdatedAt   time.Time    `bson:"updated_at" json:"updated_at"`
+	Events      []OrderEvent `bson:"events" json:"events"`
+}
+
+type OrderEvent struct {
+	ID          string    `bson:"event_id" json:"event_id"`
+	Reference   string    `bson:"reference" json:"reference"`
+	EventType   string    `bson:"event_type" json:"event_type"`
+	AggregateID string    `bson:"aggregate_id" json:"aggregate_id"`
+	CreatedAt   time.Time `bson:"created_at" json:"created_at"`
+	UpdatedAt   time.Time `bson:"updated_at" json:"updated_at"`
+	Version     int       `bson:"version" json:"version"`
+	Payload     Order     `bson:"payload" json:"payload"`
+}
+
+type Order struct {
+	CreatedAt       time.Time     `json:"created_at" bson:"created_at"`
+	ExpiryDate      time.Time     `json:"expiry_date" bson:"expired_date"`
+	CustomerID      uint64        `json:"customer_id" bson:"customer_id"`
+	CampaignID      string        `json:"campaign_id" bson:"campaign_id"`
+	ID              string        `json:"id" bson:"id"`
+	Reference       string        `json:"reference" bson:"reference"`
+	ShipmentType    int           `json:"shipment_type" bson:"shipment_type"`
+	ShippingCost    float32       `json:"shipping_cost" bson:"shipping_cost"`
+	Status          string        `json:"status" bson:"status"`
+	SubtotalPrice   float32       `json:"subtotal_price" bson:"subtotal_price"`
+	UserID          uint64        `json:"user_id" bson:"user_id"`
+	VendorID        uint64        `json:"vendor_id" bson:"vendor_id"`
+	OrderItems      []OrderItemOp `json:"order_items" bson:"order_items"`
+	AgentID         uint64        `json:"agent_id" bson:"agent_id"`
+	DeviceID        string        `json:"device_id" bson:"device_id"`
+	TotalCommission float32       `json:"total_commission" bson:"total_commission"`
+	ShippingTrxID   string        `json:"shipping_trx_id" bson:"shipping_trx_id"`
+	Channel         string        `json:"channel" bson:"channel"`
+	TotalPrice      float32       `json:"total_price" bson:"total_price"`
+	PaymentType     string        `json:"payment_type" bson:"payment_type"`
+	MerchantTrxID   string        `json:"merchant_trx_id" bson:"merchant_trx_id"`
+	CartID          string        `json:"cart_id" bson:"cart_id"`
+}
+
+type OrderItemOp struct {
+	Attributes    string  `json:"attributes" bson:"attributes" transform:"attributes"`
+	Description   string  `json:"description" bson:"description"`
+	ItemImage     string  `json:"item_image" bson:"item_image" transform:"item_image"`
+	Commission    float32 `json:"commission" bson:"commission" transform:"commission"`
+	Name          string  `json:"name" bson:"name" transform:"item_name"`
+	ProductCode   string  `json:"product_code" bson:"product_code" transform:"item_reference_id"`
+	Price         float32 `json:"price" bson:"price" transform:"price"`
+	Quantity      int     `json:"quantity" bson:"quantity" transform:"quantity"`
+	ResellerPrice float64 `json:"reseller_price" bson:"reseller_price"`
+	ItemID        uint64  `json:"item_id" bson:"item_id" transform:"item_id"`
 }
 
 type OrderItemMulti struct {
