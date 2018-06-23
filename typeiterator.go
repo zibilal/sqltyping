@@ -50,11 +50,13 @@ func TypeIterator(input interface{}, output interface{}, customValues ...func(in
 
 							for _, split := range ofsplit {
 								osplit := strings.Split(split, ":")
-								oosplit := strings.Replace(strings.Split(osplit[1], ",")[0], "\"", "",-1)
-								if k.String() == oosplit {
-									foval = oval.Field(s)
-									found = true
-									break
+								if len(osplit) == 2 {
+									oosplit := strings.Replace(strings.Split(osplit[1], ",")[0], "\"", "",-1)
+									if k.String() == oosplit {
+										foval = oval.Field(s)
+										found = true
+										break
+									}
 								}
 							}
 
