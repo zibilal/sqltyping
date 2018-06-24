@@ -4,9 +4,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"reflect"
+	"strconv"
 	"testing"
 	"time"
-	"strconv"
 )
 
 func TestTypeIterator(t *testing.T) {
@@ -621,6 +622,125 @@ func TestMapTypedonTypeIterator(t *testing.T) {
 			}
 		}
 	}
+}
+
+func TestIterateStructWithInterfaceTypedField(t *testing.T) {
+	now := time.Now()
+	checkout := &Checkout{
+		CreatedAt:  now,
+		UpdatedAt:  now,
+		Status:     "Process Checkout",
+		CheckoutBy: "user1",
+		Attributes: map[string]string{
+			"phone_number": "081123480",
+			"vendor":       "Numerindo",
+		},
+	}
+
+	checkoutEvent := CheckoutEvent{
+		AggregateId: "1313211234",
+		CreatedAt:   now,
+		UpdatedAt:   now,
+		Checkouts:   []Encoder{checkout},
+	}
+
+	t.Log("Testing Checkout event iterate type")
+	{
+
+		ival := reflect.Indirect(reflect.ValueOf(checkoutEvent))
+		ityp := ival.Type()
+
+		for i := 0; i < ival.NumField(); i++ {
+			fval := ival.Field(i)
+			ftyp := ityp.Field(i)
+
+			if fval.Kind() == reflect.Interface {
+				pval := reflect.Indirect(fval.Elem())
+				ptyp := pval.Type()
+				t.Log("Name:", ftyp.Name, "Type:", ftyp.Type, "Value", pval, "Elem", pval.Type())
+
+				if pval.Kind() == reflect.Map {
+					ppval := reflect.Indirect(pval.Elem())
+					t.Log("\tM:Name:", ftyp.Name, "Type:", ftyp.Type, "Value", ppval, "Elem", ppval.Type())
+				} else if pval.Kind() == reflect.Slice {
+					spval := pval.Index(i)
+					t.Log("\tSl:Name:", ftyp.Name, "Type:", ftyp.Type, "Value", spval, "Elem", spval.Type())
+				} else if pval.Kind() == reflect.Struct {
+					for j := 0; j < pval.NumField(); j++ {
+						fpval := pval.Field(j)
+						fptyp := ptyp.Field(j)
+						t.Log("\tSt:Name:", fptyp.Name, "Type:", fptyp.Type, "Value", fpval)
+					}
+				}
+			} else if fval.Kind() == reflect.Slice {
+				t.Log("Slice: Name:", ftyp.Name, "Type:", ftyp.Type, "Value", fval, "Elem", fval.Type())
+			} else {
+				t.Log("Default: Name:", ftyp.Name, "Type:", ftyp.Type, "Value", fval)
+			}
+
+		}
+	}
+
+	t.Log("Testing With TypeIterator")
+	{
+
+		checkoutOutput := struct {
+			AggregateId string             `bson:"aggregate_id" json:"aggregate_id"`
+			CreatedAt   time.Time          `bson:"created_at" json:"created_at"`
+			UpdatedAt   time.Time          `bson:"updated_at" json:"updated_at"`
+			Checkouts   []CheckoutResponse `bson:"events" json:"events"`
+		}{}
+
+		if err := TypeIterator(checkoutEvent, &checkoutOutput); err != nil {
+			t.Fatalf("%s expected error nil, got %s", failed, err.Error())
+		} else {
+			if IsEmpty(checkoutOutput) {
+				t.Fatalf("%s expected checkoutOutput is not empty", failed)
+			} else {
+				if b, err := json.MarshalIndent(checkoutOutput, "", "\t"); err != nil {
+					t.Fatalf("%s expected error nil, got %s", failed, err)
+				} else {
+					t.Logf("%s expected checkoutOutput is not empty, RESULT: %s", success, string(b))
+				}
+			}
+		}
+	}
+}
+
+type CheckoutEvent struct {
+	AggregateId string    `bson:"aggregate_id" json:"aggregate_id"`
+	CreatedAt   time.Time `bson:"created_at" json:"created_at"`
+	UpdatedAt   time.Time `bson:"updated_at" json:"updated_at"`
+	Checkouts   []Encoder `bson:"events" json:"events"`
+}
+
+type Checkout struct {
+	CreatedAt  time.Time
+	UpdatedAt  time.Time
+	Status     string
+	CheckoutBy string
+	Attributes interface{}
+}
+
+type CheckoutResponse struct {
+	CreatedAt  time.Time
+	UpdatedAt  time.Time
+	Status     string
+	CheckoutBy string
+	Attributes interface{}
+}
+
+func (e *Checkout) Unmarshal(b []byte) error {
+	return nil
+}
+
+func (e *Checkout) Marshal(data Encoder) ([]byte, error) {
+	return nil, nil
+}
+
+type Encoder interface {
+	Unmarshal(b []byte) error
+	Marshal(data Encoder) ([]byte, error)
 }
 
 type OrderAggregate struct {

@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-func TypeIterator(input interface{}, output interface{}, customValues ...func(interface{}) (interface {}, error) ) (err error) {
+func TypeIterator(input interface{}, output interface{}, customValues ...func(interface{}) (interface{}, error)) (err error) {
 
 	if input == nil || output == nil {
 		return nil
@@ -51,7 +51,7 @@ func TypeIterator(input interface{}, output interface{}, customValues ...func(in
 							for _, split := range ofsplit {
 								osplit := strings.Split(split, ":")
 								if len(osplit) == 2 {
-									oosplit := strings.Replace(strings.Split(osplit[1], ",")[0], "\"", "",-1)
+									oosplit := strings.Replace(strings.Split(osplit[1], ",")[0], "\"", "", -1)
 									if k.String() == oosplit {
 										foval = oval.Field(s)
 										found = true
@@ -61,26 +61,26 @@ func TypeIterator(input interface{}, output interface{}, customValues ...func(in
 							}
 
 							if found {
-								if mival.Type().String() == "interface {}" {
+								if mival.Kind() == reflect.Interface {
 									if istr, ok := mival.Interface().(string); ok && foval.Kind() == reflect.String {
 										foval.Set(reflect.ValueOf(istr))
 									} else if iint, ok := mival.Interface().(int); ok && foval.Kind() == reflect.Int {
 										foval.Set(reflect.ValueOf(iint))
-									} else if  iint8, ok := mival.Interface().(int8); ok && foval.Kind() == reflect.Int8 {
+									} else if iint8, ok := mival.Interface().(int8); ok && foval.Kind() == reflect.Int8 {
 										foval.Set(reflect.ValueOf(iint8))
-									} else if  iint16, ok := mival.Interface().(int16); ok && foval.Kind() == reflect.Int16 {
+									} else if iint16, ok := mival.Interface().(int16); ok && foval.Kind() == reflect.Int16 {
 										foval.Set(reflect.ValueOf(iint16))
-									} else if  iint32, ok := mival.Interface().(int32); ok && foval.Kind() == reflect.Int32{
+									} else if iint32, ok := mival.Interface().(int32); ok && foval.Kind() == reflect.Int32 {
 										foval.Set(reflect.ValueOf(iint32))
-									} else if  iint64, ok := mival.Interface().(int64); ok && foval.Kind() == reflect.Int64 {
+									} else if iint64, ok := mival.Interface().(int64); ok && foval.Kind() == reflect.Int64 {
 										foval.Set(reflect.ValueOf(iint64))
-									} else if  ifloat32, ok := mival.Interface().(float32); ok && foval.Kind() == reflect.Float32 {
+									} else if ifloat32, ok := mival.Interface().(float32); ok && foval.Kind() == reflect.Float32 {
 										foval.Set(reflect.ValueOf(ifloat32))
 									} else if ifloat64, ok := mival.Interface().(float64); ok && foval.Kind() == reflect.Float64 {
 										foval.Set(reflect.ValueOf(ifloat64))
 									} else if foval.Type().String() == mival.Type().String() {
 										foval.Set(mival)
-									}  else {
+									} else {
 										var isHandled bool
 										for _, c := range customValues {
 											result, resultError := c(mival.Interface())
@@ -91,10 +91,20 @@ func TypeIterator(input interface{}, output interface{}, customValues ...func(in
 										}
 
 										if !isHandled {
-											if slicemap, ok := mival.Interface().([]interface {}); ok {
-												TypeIterator(slicemap,  foval.Addr().Interface(), customValues...)
-											} else {
-												TypeIterator(mival.Interface(),  foval.Addr().Interface(), customValues...)
+
+											if mival.Kind() == reflect.Slice {
+												for idx := 0; idx < mival.Len(); idx++ {
+													err = TypeIterator(mival.Index(idx).Interface(), foval.Addr().Interface(), customValues...)
+													if err != nil {
+														return
+													}
+												}
+											} else if mival.Kind() == reflect.Interface {
+												pval := reflect.Indirect(mival.Elem())
+												err = TypeIterator(pval.Interface(), foval.Addr().Interface(), customValues...)
+												if err != nil {
+													return
+												}
 											}
 
 										}
@@ -272,6 +282,8 @@ func TypeIterator(input interface{}, output interface{}, customValues ...func(in
 		return
 	case reflect.Struct:
 
+		fmt.Println("\tIt is struct")
+
 		if checkTypes && oval.Kind() != reflect.Struct {
 			err = fmt.Errorf("expecting output type of struct")
 		} else {
@@ -285,6 +297,7 @@ func TypeIterator(input interface{}, output interface{}, customValues ...func(in
 				fin := ival.Field(i)
 				ftin := ityp.Field(i)
 
+				fmt.Println("\t\tA Name", ftin.Name)
 				if !checkTypes {
 
 					ibuff := output.(*bytes.Buffer)
@@ -316,9 +329,15 @@ func TypeIterator(input interface{}, output interface{}, customValues ...func(in
 						if fin.Type().String() == "time.Time" {
 							dTime := fin.Interface().(time.Time)
 							str := dTime.Format("2006-01-02 03:04:05")
-							TypeIterator(str, ibuff, customValues...)
+							err = TypeIterator(str, ibuff, customValues...)
+							if err != nil {
+								return
+							}
 						} else {
-							TypeIterator(fin.Interface(), ibuff, customValues...)
+							err = TypeIterator(fin.Interface(), ibuff, customValues...)
+							if err != nil {
+								return
+							}
 						}
 					}
 
@@ -345,8 +364,10 @@ func TypeIterator(input interface{}, output interface{}, customValues ...func(in
 					if fout.Kind() == reflect.Interface {
 						fout.Set(fin)
 					} else if fin.Type().String() == "time.Time" {
+						fmt.Println("1. Heree....")
 						if fout.Type().String() == "time.Time" {
 							fout.Set(fin)
+							fmt.Println("\t\tSetin", fin, "fout", fout)
 						} else if fout.Kind() == reflect.String {
 							dTime := fin.Interface().(time.Time)
 							str := dTime.Format("2006-01-02 03:04:05")
@@ -354,8 +375,12 @@ func TypeIterator(input interface{}, output interface{}, customValues ...func(in
 						}
 					} else {
 						if fout.IsValid() && fin.IsValid() {
+							fmt.Println("2. Hereee...")
 							iout := reflect.New(fout.Type())
-							TypeIterator(fin.Interface(), iout.Interface(), customValues...)
+							err = TypeIterator(fin.Interface(), iout.Interface(), customValues...)
+							if err != nil {
+								return
+							}
 							fout.Set(iout.Elem())
 						}
 					}
@@ -371,21 +396,30 @@ func TypeIterator(input interface{}, output interface{}, customValues ...func(in
 
 		return nil
 	case reflect.Slice:
+		fmt.Println("When a slice", "the output", oval.Kind())
 		if !checkTypes {
 			obuff := output.(*bytes.Buffer)
 			for i := 0; i < ival.Len(); i++ {
 				iItem := ival.Index(i)
-				TypeIterator(iItem.Interface(), obuff, customValues...)
+				err = TypeIterator(iItem.Interface(), obuff, customValues...)
+				if err != nil {
+					return
+				}
 			}
 		} else if oval.Kind() == reflect.Interface {
+			fmt.Println("--> it is an interface")
 			oval.Set(ival)
 		} else if oval.Kind() == reflect.Slice {
+			fmt.Println("--> it is a slice")
 			outSlice := reflect.MakeSlice(reflect.SliceOf(otyp.Elem()), 0, ival.Len())
 			for i := 0; i < ival.Len(); i++ {
 
 				oItem := reflect.New(otyp.Elem())
 				iItem := ival.Index(i)
-				TypeIterator(iItem.Interface(), oItem.Interface(), customValues...)
+				err = TypeIterator(iItem.Interface(), oItem.Interface(), customValues...)
+				if err != nil {
+					return
+				}
 				outSlice = reflect.Append(outSlice, oItem.Elem())
 			}
 			oval.Set(outSlice)
@@ -400,6 +434,53 @@ func TypeIterator(input interface{}, output interface{}, customValues ...func(in
 		} else {
 			if oval.Kind() == ival.Kind() {
 				oval.Set(ival)
+			} else if ival.Kind() == reflect.Float64 {
+				switch oval.Kind() {
+				case reflect.Int:
+					if dval, ok := ival.Interface().(int); ok {
+						oval.Set(reflect.ValueOf(dval))
+					}
+				case reflect.Int8:
+					if dval, ok := ival.Interface().(int8); ok {
+						oval.Set(reflect.ValueOf(dval))
+					}
+				case reflect.Int16:
+					if dval, ok := ival.Interface().(int16); ok {
+						oval.Set(reflect.ValueOf(dval))
+					}
+				case reflect.Int32:
+					if dval, ok := ival.Interface().(int32); ok {
+						oval.Set(reflect.ValueOf(dval))
+					}
+				case reflect.Int64:
+					if dval, ok := ival.Interface().(int64); ok {
+						oval.Set(reflect.ValueOf(dval))
+					}
+				case reflect.Uint:
+					if dval, ok := ival.Interface().(uint); ok {
+						oval.Set(reflect.ValueOf(dval))
+					}
+				case reflect.Uint8:
+					if dval, ok := ival.Interface().(uint8); ok {
+						oval.Set(reflect.ValueOf(dval))
+					}
+				case reflect.Uint16:
+					if dval, ok := ival.Interface().(uint16); ok {
+						oval.Set(reflect.ValueOf(dval))
+					}
+				case reflect.Uint32:
+					if dval, ok := ival.Interface().(uint32); ok {
+						oval.Set(reflect.ValueOf(dval))
+					}
+				case reflect.Uint64:
+					if dval, ok := ival.Interface().(uint64); ok {
+						oval.Set(reflect.ValueOf(dval))
+					}
+				case reflect.Float32:
+					if dval, ok := ival.Interface().(float32); ok {
+						oval.Set(reflect.ValueOf(dval))
+					}
+				}
 			} else {
 				err = fmt.Errorf("input type %T cannot by set in output of type %T", ival.Interface(), oval.Interface())
 				return
@@ -407,6 +488,14 @@ func TypeIterator(input interface{}, output interface{}, customValues ...func(in
 		}
 
 		return nil
+	case reflect.Interface:
+		fmt.Println("It is an interface...")
+		pival := ival.Elem()
+		err = TypeIterator(pival.Interface(), output, customValues...)
+		if err != nil {
+			return
+		}
+
 	default:
 		err = fmt.Errorf("unsupported type %T", input)
 		return
