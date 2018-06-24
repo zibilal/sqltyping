@@ -705,6 +705,46 @@ func TestIterateStructWithInterfaceTypedField(t *testing.T) {
 			}
 		}
 	}
+
+	t.Log("Testing from an map input")
+	{
+		mval := make(map[string]interface{})
+		b, err := json.Marshal(checkoutEvent)
+		if err != nil {
+			t.Fatalf("%s expected error nil, got %s", failed, err.Error())
+		} else {
+			t.Logf("%s expected error nil", success)
+		}
+		err = json.Unmarshal(b, &mval)
+		if err != nil {
+			t.Fatalf("%s expected error nil, got %s", failed, err.Error())
+		} else {
+			t.Logf("%s expected error nil", success)
+		}
+
+		t.Log("Mval", mval)
+
+		checkoutOutput := struct {
+			AggregateId string             `bson:"aggregate_id" json:"aggregate_id"`
+			CreatedAt   string             `bson:"created_at" json:"created_at"`
+			UpdatedAt   string             `bson:"updated_at" json:"updated_at"`
+			Checkouts   []CheckoutResponse `bson:"events" json:"events"`
+		}{}
+
+		if err := TypeIterator(mval, &checkoutOutput); err != nil {
+			t.Fatalf("%s expected error nil, got %s", failed, err.Error())
+		} else {
+			if IsEmpty(checkoutOutput) {
+				t.Fatalf("%s expected checkoutOutput is not empty", failed)
+			} else {
+				if b, err := json.MarshalIndent(checkoutOutput, "", "\t"); err != nil {
+					t.Fatalf("%s expected error nil, got %s", failed, err)
+				} else {
+					t.Logf("%s expected checkoutOutput is not empty, RESULT: %s", success, string(b))
+				}
+			}
+		}
+	}
 }
 
 type CheckoutEvent struct {
@@ -723,8 +763,8 @@ type Checkout struct {
 }
 
 type CheckoutResponse struct {
-	CreatedAt  time.Time
-	UpdatedAt  time.Time
+	CreatedAt  string
+	UpdatedAt  string
 	Status     string
 	CheckoutBy string
 	Attributes interface{}
