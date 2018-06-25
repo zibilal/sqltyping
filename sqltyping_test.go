@@ -106,8 +106,9 @@ func TestSqlTypingProcessUpdate(t *testing.T) {
 	t.Log("Testing SqlTyping.processUpdate")
 	{
 		dataInput := "table_name:User,column_name:id|bhf1234584,column_name:username|example,column_name:first_name|first,column_name:last_name|last,column_name:email|first.last@example.com,column_name:secret_detail"
-		expectedQuery := `UPDATE user SET username='example',first_name='first',last_name='last',email='first.last@example.com' WHERE id='bhf1234584'`
-		typing := NewSqlTyping("INSERT")
+		expectedQuery := `UPDATE user SET first_name='first',last_name='last',email='first.last@example.com' WHERE id='bhf1234584' AND username='example'`
+		typing := NewSqlTyping("UPDATE")
+		typing.SetUpdateKey("username")
 		result := typing.processUpdate(dataInput)
 
 		if result == "" {

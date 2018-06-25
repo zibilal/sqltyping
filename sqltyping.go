@@ -203,7 +203,7 @@ func (t *SqlTyping) processUpdate(input string) string {
 					if where == "" {
 						where = fmt.Sprintf(" %s='%s'", splitValue[0], splitValue[1])
 					} else {
-						where += where + fmt.Sprintf(" AND %s='%s'", splitValue[0], splitValue[1])
+						where += fmt.Sprintf(" AND %s='%s'", splitValue[0], splitValue[1])
 					}
 				} else {
 					setColumns = append(setColumns, fmt.Sprintf("%s='%s'", splitValue[0], splitValue[1]))
