@@ -201,7 +201,7 @@ func (t *SqlTyping) processUpdate(input string) string {
 			if len(splitValue) == 2 && splitValue[1] != "" {
 				if strings.ToLower(splitValue[0]) == "id" || splitValue[0] == t.updateKey {
 					if where == "" {
-						where = fmt.Sprintf(" WHERE %s='%s'", splitValue[0], splitValue[1])
+						where = fmt.Sprintf(" %s='%s'", splitValue[0], splitValue[1])
 					} else {
 						where += where + fmt.Sprintf(" AND %s='%s'", splitValue[0], splitValue[1])
 					}
@@ -210,6 +210,10 @@ func (t *SqlTyping) processUpdate(input string) string {
 				}
 			}
 		}
+	}
+
+	if where != "" {
+		where = " WHERE" + where
 	}
 
 	return fmt.Sprintf("UPDATE %s SET %s%s", tableName, strings.Join(setColumns, ","), where)
