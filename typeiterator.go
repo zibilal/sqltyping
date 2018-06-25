@@ -358,9 +358,9 @@ func TypeIterator(input interface{}, output interface{}, customValues ...func(in
 									switch tok {
 									case scanner.String:
 										text := scanner1.TokenText()
-										fmt.Println("Heeree", text, "Otag", string(otag))
-										if strings.Contains(string(otag), scanner1.TokenText()) {
-											fout = oval.Field(i)
+										if strings.Contains(string(otag), text) {
+											fout = oval.Field(j)
+											break
 										}
 									}
 								}
