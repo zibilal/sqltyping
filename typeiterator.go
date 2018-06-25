@@ -323,16 +323,18 @@ func TypeIterator(input interface{}, output interface{}, customValues ...func(in
 					}
 					if fieldName != "" {
 						fieldName = strings.Replace(fieldName, "\"", "", -1)
-						ibuff.WriteString(fmt.Sprintf(",column_name:%v", fieldName))
-
 						if fin.Type().String() == "time.Time" {
 							dTime := fin.Interface().(time.Time)
-							str := dTime.Format("2006-01-02 03:04:05")
-							err = TypeIterator(str, ibuff, customValues...)
-							if err != nil {
-								return
+							if !IsEmpty(dTime) {
+								ibuff.WriteString(fmt.Sprintf(",column_name:%v", fieldName))
+								str := dTime.Format("2006-01-02 03:04:05")
+								err = TypeIterator(str, ibuff, customValues...)
+								if err != nil {
+									return
+								}
 							}
 						} else {
+							ibuff.WriteString(fmt.Sprintf(",column_name:%v", fieldName))
 							err = TypeIterator(fin.Interface(), ibuff, customValues...)
 							if err != nil {
 								return
