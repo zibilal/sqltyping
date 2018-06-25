@@ -174,7 +174,7 @@ func (t *SqlTyping) processInsert(input string) string {
 			tableName = convertCamelCaseToSnakeCase(pair[1])
 		case "column_name":
 			splitValue := strings.Split(pair[1], "|")
-			if len(splitValue) == 2 && splitValue[1] != "" {
+			if len(splitValue) == 2 && strings.TrimSpace(splitValue[1]) != "" {
 				intos = append(intos, splitValue[0])
 				values = append(values, "'"+splitValue[1]+"'")
 			}
@@ -198,7 +198,7 @@ func (t *SqlTyping) processUpdate(input string) string {
 			tableName = convertCamelCaseToSnakeCase(pair[1])
 		case "column_name":
 			splitValue := strings.Split(pair[1], "|")
-			if len(splitValue) == 2 && splitValue[1] != "" {
+			if len(splitValue) == 2 && strings.TrimSpace(splitValue[1]) != "" {
 				if strings.ToLower(splitValue[0]) == "id" || splitValue[0] == t.updateKey {
 					if where == "" {
 						where = fmt.Sprintf(" %s='%s'", splitValue[0], splitValue[1])

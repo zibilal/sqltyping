@@ -926,6 +926,7 @@ type UserExample struct {
 	Email          string
 	Title          string
 	Authentication Authentication
+	CreatedAt      time.Time
 }
 
 type Authentication struct {

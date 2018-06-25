@@ -3,6 +3,7 @@ package sqltyping
 import (
 	"bytes"
 	"testing"
+	"time"
 )
 
 const (
@@ -34,7 +35,7 @@ func TestSqlTyping(t *testing.T) {
 			t.Fatalf("%s expected results length bigger than zero = %d", failed, len(results))
 		}
 
-		if expectedSql == results[1] {
+		if len(results) > 1 && expectedSql == results[1] {
 			t.Logf("%s expected query = %s", success, expectedSql)
 		} else {
 			t.Errorf("%s expected query = %s, got %s", failed, expectedSql, results[0])
@@ -272,5 +273,26 @@ func TestConvertCamelCaseToSnakeCase (t *testing.T) {
 		} else {
 			t.Errorf("%s expected result = expected1 : got %s", failed, str)
 		}
+	}
+}
+
+func TestSimpleInsertQuery(t *testing.T) {
+	t.Log("Test simple insert query")
+	{
+		data := struct {
+			Username string
+			Session string
+			ExpiryDate time.Time
+		}{
+			Username: "example1",
+			Session: "123123412431243",
+		}
+
+		typing := NewSqlTyping(InsertQuery)
+		queries, _ := typing.Typing(data)
+
+
+		t.Log("Generated query", queries)
+
 	}
 }
