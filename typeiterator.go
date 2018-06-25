@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"text/scanner"
 )
 
 func TypeIterator(input interface{}, output interface{}, customValues ...func(interface{}) (interface{}, error)) (err error) {
@@ -350,13 +351,16 @@ func TypeIterator(input interface{}, output interface{}, customValues ...func(in
 						for j := 0; j < oval.NumField(); j++ {
 							ftout = otyp.Field(j)
 							if itag, otag := ftin.Tag, ftout.Tag; itag != "" && otag != "" {
-								isplit := strings.Split(string(itag), ":")
-								osplit := strings.Split(string(otag), ":")
-								iisplit := strings.Split(isplit[1], ",")
-								oosplit := strings.Split(osplit[1], ",")
+								var scanner1 scanner.Scanner
+								scanner1.Init(strings.NewReader(string(itag)))
 
-								if len(isplit) >= 2 && len(osplit) >= 2 && iisplit[0] == oosplit[0] {
-									fout = oval.Field(i)
+								for tok := scanner1.Scan(); tok != scanner.EOF; tok = scanner1.Scan() {
+									switch tok {
+									case scanner.String:
+										if strings.Contains(string(otag), scanner1.TokenText()) {
+											fout = oval.Field(i)
+										}
+									}
 								}
 							}
 						}

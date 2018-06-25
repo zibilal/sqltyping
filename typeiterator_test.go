@@ -10,6 +10,35 @@ import (
 	"time"
 )
 
+func TestSimpleTest(t *testing.T) {
+	t.Log("Simple struct to struct testing")
+	{
+		input := struct {
+			ItemName string `itag:"the_item"`
+		}{
+			"First Item",
+		}
+
+		output := struct {
+			Name string `transform:"item_name" json:"name" transform:"the_item"`
+		}{}
+
+		err := TypeIterator(input, &output)
+
+		if err != nil {
+			t.Fatalf("%s expected error nil, got %s", failed, err.Error())
+		} else {
+			t.Logf("%s expected error nil", success)
+
+			if output.Name == "First Item" {
+				t.Logf("%s expected output = First Item", success)
+			} else {
+				t.Fatalf("%s expected output = First Item, got %s", failed, output.Name)
+			}
+		}
+	}
+}
+
 func TestTypeIterator(t *testing.T) {
 	t.Log("Testing type iterator")
 	{
