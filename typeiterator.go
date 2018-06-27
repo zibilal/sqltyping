@@ -32,12 +32,21 @@ func TypeIterator(input interface{}, output interface{}, customValues ...func(in
 			obuff.WriteString(ityp.Name() + "\n")
 		}
 
-		if checkTypes && oval.Kind() != reflect.Map && oval.Kind() != reflect.Struct {
+		if checkTypes && oval.Kind() != reflect.Map && oval.Kind() != reflect.Struct && oval.Kind() != reflect.Ptr {
 			err = fmt.Errorf("expecting output type of map or struct")
 		} else if checkTypes {
 
 			for _, k := range ival.MapKeys() {
 				mival := ival.MapIndex(k)
+
+				if oval.Kind() == reflect.Ptr {
+					if oval.IsNil() {
+						tmpOval := reflect.New(oval.Type().Elem())
+						oval.Set(tmpOval)
+						oval = oval.Elem()
+						otyp = otyp.Elem()
+					}
+				}
 
 				if oval.Kind() == reflect.Struct {
 					foval := oval.FieldByName(k.String())
