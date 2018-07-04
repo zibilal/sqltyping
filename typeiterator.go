@@ -451,47 +451,62 @@ func TypeIterator(input interface{}, output interface{}, customValues ...func(in
 			} else if ival.Kind() == reflect.Float64 {
 				switch oval.Kind() {
 				case reflect.Int:
-					if dval, ok := ival.Interface().(int); ok {
-						oval.Set(reflect.ValueOf(dval))
+					if dval, ok := ival.Interface().(float64); ok {
+						ial := int(dval)
+						oval.Set(reflect.ValueOf(ial))
 					}
 				case reflect.Int8:
-					if dval, ok := ival.Interface().(int8); ok {
-						oval.Set(reflect.ValueOf(dval))
+					if dval, ok := ival.Interface().(float64); ok {
+						ial := int8(dval)
+						oval.Set(reflect.ValueOf(ial))
 					}
 				case reflect.Int16:
-					if dval, ok := ival.Interface().(int16); ok {
-						oval.Set(reflect.ValueOf(dval))
+					if dval, ok := ival.Interface().(float64); ok {
+						ial := int16(dval)
+						oval.Set(reflect.ValueOf(ial))
 					}
 				case reflect.Int32:
-					if dval, ok := ival.Interface().(int32); ok {
-						oval.Set(reflect.ValueOf(dval))
+					if dval, ok := ival.Interface().(float64); ok {
+						ial := int32(dval)
+						oval.Set(reflect.ValueOf(ial))
 					}
 				case reflect.Int64:
-					if dval, ok := ival.Interface().(int64); ok {
-						oval.Set(reflect.ValueOf(dval))
+					if dval, ok := ival.Interface().(float64); ok {
+						ial := int64(dval)
+						oval.Set(reflect.ValueOf(ial))
 					}
 				case reflect.Uint:
-					if dval, ok := ival.Interface().(uint); ok {
-						oval.Set(reflect.ValueOf(dval))
+					if dval, ok := ival.Interface().(float64); ok {
+						ial := uint(dval)
+						oval.Set(reflect.ValueOf(ial))
 					}
 				case reflect.Uint8:
-					if dval, ok := ival.Interface().(uint8); ok {
-						oval.Set(reflect.ValueOf(dval))
+					if dval, ok := ival.Interface().(float64); ok {
+						ial := uint8(dval)
+						oval.Set(reflect.ValueOf(ial))
 					}
 				case reflect.Uint16:
-					if dval, ok := ival.Interface().(uint16); ok {
-						oval.Set(reflect.ValueOf(dval))
+					if dval, ok := ival.Interface().(float64); ok {
+						ial := uint16(dval)
+						oval.Set(reflect.ValueOf(ial))
 					}
 				case reflect.Uint32:
-					if dval, ok := ival.Interface().(uint32); ok {
-						oval.Set(reflect.ValueOf(dval))
+					if dval, ok := ival.Interface().(float64); ok {
+						ial := uint32(dval)
+						oval.Set(reflect.ValueOf(ial))
 					}
 				case reflect.Uint64:
 					if dval, ok := ival.Interface().(uint64); ok {
-						oval.Set(reflect.ValueOf(dval))
+						ial := uint64(dval)
+						oval.Set(reflect.ValueOf(ial))
 					}
 				case reflect.Float32:
-					if dval, ok := ival.Interface().(float32); ok {
+					if dval, ok := ival.Interface().(float64); ok {
+						ial := float32(dval)
+						oval.Set(reflect.ValueOf(ial))
+					}
+				case reflect.Float64:
+					if dval, ok := ival.Interface().(float64); ok {
 						oval.Set(reflect.ValueOf(dval))
 					}
 				}
