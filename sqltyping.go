@@ -2,6 +2,7 @@ package sqltyping
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"reflect"
 	"regexp"
@@ -35,7 +36,7 @@ const (
 )
 
 type SqlTyping struct {
-	typeQuery    string
+	typeQuery string
 	updateKey string
 }
 
@@ -74,6 +75,74 @@ func (t *SqlTyping) Typing(input interface{}) ([]string, error) {
 		return []string{}, fmt.Errorf("not supported type %T", input)
 	}
 
+}
+
+func (t *SqlTyping) TypingUpdateWithWhereClause(input interface{}, query interface{}) (string, error) {
+	ival := reflect.ValueOf(input)
+	ique := reflect.ValueOf(query)
+
+	if ival.Kind() != reflect.Struct || ique.Kind() != reflect.Struct {
+		return "", errors.New("please provide both input and query as variable of type struct")
+	}
+
+	var err error
+	buff1 := bytes.NewBufferString("")
+	err = TypeIterator(input, buff1)
+	if err != nil {
+		return "", err
+	}
+	buff2 := bytes.NewBufferString("")
+	err = TypeIterator(query, buff2)
+	if err != nil {
+		return "", err
+	}
+
+	data1, err := singleProcessBytes(buff1.Bytes())
+	if err != nil {
+		return "", err
+	}
+	data2, err := singleProcessBytes(buff2.Bytes())
+	if err != nil {
+		return "", err
+	}
+
+	qstr := t.processUpdateWithWhere(data1, data2)
+
+	return qstr, nil
+}
+
+func singleProcessBytes(bytesData []byte) (string, error) {
+	if len(bytesData) == 0 {
+		return "", errors.New("[singleProcessBytes]Empty bytes data")
+	} else {
+		buff := bytes.NewBuffer(bytesData)
+		var s scanner.Scanner
+		s.Init(buff)
+		pairs := []string{}
+
+		offStack := new(offsetstack)
+
+		var tok rune
+		for ; tok != scanner.EOF; tok = s.Scan() {
+			if s.TokenText() == "{" {
+				offStack.push(s.Position.Column)
+			}
+			if s.TokenText() == "}" {
+				pairs = append(pairs, fmt.Sprintf("%d,%d", offStack.pop(), s.Position.Column))
+			}
+		}
+
+		bytesInside := []byte{}
+		for idx := 0; idx < len(pairs); idx++ {
+			pair := pairs[idx]
+			split := strings.Split(pair, ",")
+			num1, _ := strconv.Atoi(split[0])
+			num2, _ := strconv.Atoi(split[1])
+
+			bytesInside = append(bytesInside, bytesData[num1:num2-1]...)
+		}
+		return string(bytesInside), nil
+	}
 }
 
 func processBytes(bytesData []byte, components []string) ([]string, error) {
@@ -217,6 +286,46 @@ func (t *SqlTyping) processUpdate(input string) string {
 	}
 
 	return fmt.Sprintf("UPDATE %s SET %s%s", tableName, strings.Join(setColumns, ","), where)
+}
+
+func (t *SqlTyping) processUpdateWithWhere(input string, where string) string {
+	setColumns := []string{}
+	tableName := ""
+
+	splitCommaSet := strings.Split(input, ",")
+	for _, byComma := range splitCommaSet {
+		pair := strings.Split(byComma, ":")
+		fmt.Println("the pair", pair)
+		switch pair[0] {
+		case "table_name":
+			tableName = convertCamelCaseToSnakeCase(pair[1])
+		case "column_name":
+			splitValue := strings.Split(pair[1], "|")
+			if len(splitValue) == 2 {
+				setColumns = append(setColumns, fmt.Sprintf("%s='%s'", splitValue[0], splitValue[1]))
+			}
+		}
+	}
+
+	splitWhereCommaSet := strings.Split(where, ",")
+	theWhere := []string{}
+	for _, byComma := range splitWhereCommaSet {
+		pair := strings.Split(byComma, ":")
+		switch pair[0] {
+		case "column_name":
+			splitValue := strings.Split(pair[1], "|")
+			if len(splitValue) == 2 && strings.TrimSpace(splitValue[1]) != "" {
+				theWhere = append(theWhere, fmt.Sprintf("%s='%s'", splitValue[0], splitValue[1]))
+			}
+		}
+	}
+
+	whereClause := ""
+	if len(theWhere) > 0 {
+		whereClause = " WHERE " + strings.Join(theWhere, " AND ")
+	}
+
+	return fmt.Sprintf("UPDATE %s SET %s%s", tableName, strings.Join(setColumns, ","), whereClause)
 }
 
 func convertCamelCaseToSnakeCase(input string) string {

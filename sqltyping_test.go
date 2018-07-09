@@ -226,12 +226,11 @@ func TestScanWithStructOfSlice(t *testing.T) {
 				t.Logf("%s %s", success, component)
 			}
 
-
 		}
 	}
 }
 
-func TestConvertCamelCaseToSnakeCase (t *testing.T) {
+func TestConvertCamelCaseToSnakeCase(t *testing.T) {
 
 	t.Log("1 conversion")
 	{
@@ -280,19 +279,56 @@ func TestSimpleInsertQuery(t *testing.T) {
 	t.Log("Test simple insert query")
 	{
 		data := struct {
-			Username string
-			Session string
+			Username   string
+			Session    string
 			ExpiryDate time.Time
 		}{
 			Username: "example1",
-			Session: "123123412431243",
+			Session:  "123123412431243",
 		}
 
 		typing := NewSqlTyping(InsertQuery)
 		queries, _ := typing.Typing(data)
 
-
 		t.Log("Generated query", queries)
 
+	}
+}
+
+type TheStruct struct {
+	Username string
+	Session  string
+	Echo string
+}
+
+func TestSimpleUpdateQuery(t *testing.T) {
+	t.Log("Test simple update query")
+	{
+		data := TheStruct{
+			Username: "example1",
+			Session:  "456789898989",
+			Echo: "The echo2",
+		}
+
+		data2 := TheStruct{
+			Echo: "the echo",
+		}
+
+		typing := NewSqlTyping(UpdateQuery)
+		query, err := typing.TypingUpdateWithWhereClause(data, data2)
+
+		if err != nil {
+			t.Fatalf("%s Expected error nil, got %s", failed, err.Error())
+		} else {
+			t.Logf("%s Expected error nil", success)
+		}
+
+		expectedQuery := `UPDATE the_struct SET Username='example1',Session='456789898989',Echo='The echo2' WHERE Echo='the echo'`
+
+		if expectedQuery == query {
+			t.Logf("%s expected query == %s", success, expectedQuery)
+		} else {
+			t.Fatalf("%s expected query == %s, got %s", failed, expectedQuery, query)
+		}
 	}
 }
