@@ -18,15 +18,9 @@ func TypeIterator(input interface{}, output interface{}, customValues ...func(in
 	}
 
 	ival := reflect.Indirect(reflect.ValueOf(input))
-	if !ival.IsValid() {
-		return errors.New("Unexpected data empty")
-	}
 	ityp := ival.Type()
 	oval := reflect.Indirect(reflect.ValueOf(output))
 	otyp := oval.Type()
-	if !oval.IsValid() {
-		return errors.New("Unexpected data empty")
-	}
 
 	checkTypes := !(oval.Type().String() == "bytes.Buffer")
 
@@ -125,9 +119,6 @@ func TypeIterator(input interface{}, output interface{}, customValues ...func(in
 								foval.Set(mSlice)
 							} else {
 								pval := reflect.Indirect(mival.Elem())
-								if !pval.IsValid() || !foval.Addr().IsValid() {
-									return
-								}
 								err = TypeIterator(pval.Interface(), foval.Addr().Interface(), customValues...)
 								if err != nil {
 									return
