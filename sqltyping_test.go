@@ -167,7 +167,7 @@ func TestTescan(t *testing.T) {
 
 	t.Log("Testing text scan")
 	{
-		var data = `{table_name:User,column_name:id|bhf1234584,column_name:username|,column_name:first_name|,column_name:last_name|,column_name:email|,column_name:secret_detail{table_name:SecretDetailEx,column_name:id|11244,column_name:api_secret|,column_name:api_token|}}`
+		var data = `((table_name:User,column_name:id|bhf1234584,column_name:username|,column_name:first_name|,column_name:last_name|,column_name:email|,column_name:secret_detail((table_name:SecretDetailEx,column_name:id|11244,column_name:api_secret|,column_name:api_token|))))`
 
 		bytesData := []byte(data)
 		buff := bytes.NewBuffer(bytesData)
@@ -207,7 +207,7 @@ func TestTescan(t *testing.T) {
 func TestScanWithStructOfSlice(t *testing.T) {
 	t.Log("Testing text scan")
 	{
-		var data = `{table_name:OrderEx,column_name:Id|o123,column_name:Updated|2018-06-17 03:43:33,column_name:Created|2018-06-17 03:43:33,column_name:Status|OrderCreated,column_name:Items{table_name:OrderItem,column_name:Id|itm123,column_name:ItemName|XL 2 Giga,column_name:Price|150000}{table_name:OrderItem,column_name:Id|itm124,column_name:ItemName|XL 5 Giga,column_name:Price|300000}}`
+		var data = `((table_name:OrderEx,column_name:Id|o123,column_name:Updated|2018-06-17 03:43:33,column_name:Created|2018-06-17 03:43:33,column_name:Status|OrderCreated,column_name:Items((table_name:OrderItem,column_name:Id|itm123,column_name:ItemName|XL 2 Giga,column_name:Price|150000))((table_name:OrderItem,column_name:Id|itm124,column_name:ItemName|XL 5 Giga,column_name:Price|300000))))`
 		bytesData := []byte(data)
 		components, err := processBytes(bytesData, []string{})
 

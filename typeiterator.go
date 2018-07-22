@@ -299,7 +299,7 @@ func TypeIterator(input interface{}, output interface{}, customValues ...func(in
 		} else {
 			if !checkTypes {
 				ibuff := output.(*bytes.Buffer)
-				ibuff.WriteString("{table_name:" + ityp.Name() + "")
+				ibuff.WriteString("((table_name:" + ityp.Name() + "")
 			}
 
 			for i := 0; i < ival.NumField(); i++ {
@@ -407,7 +407,7 @@ func TypeIterator(input interface{}, output interface{}, customValues ...func(in
 
 			if !checkTypes {
 				ibuff := output.(*bytes.Buffer)
-				ibuff.WriteString("}")
+				ibuff.WriteString("))")
 			}
 		}
 

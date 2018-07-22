@@ -8,7 +8,6 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-	"text/scanner"
 )
 
 type offsetstack struct {
@@ -101,6 +100,7 @@ func (t *SqlTyping) TypingUpdateWithWhereClause(input interface{}, query interfa
 	if err != nil {
 		return "", err
 	}
+
 	data2, err := singleProcessBytes(buff2.Bytes())
 	if err != nil {
 		return "", err
@@ -116,19 +116,28 @@ func singleProcessBytes(bytesData []byte) (string, error) {
 		return "", errors.New("[singleProcessBytes]Empty bytes data")
 	} else {
 		buff := bytes.NewBuffer(bytesData)
-		var s scanner.Scanner
-		s.Init(buff)
-		pairs := []string{}
-
+		dt := buff.String()
+		var tmp string
+		var pairs []string
 		offStack := new(offsetstack)
+		var h, l int
+		for idx := 1; idx < len(dt); idx += 2 {
 
-		var tok rune
-		for ; tok != scanner.EOF; tok = s.Scan() {
-			if s.TokenText() == "{" {
-				offStack.push(s.Position.Column)
+			if len(dt)%2 != 0 && idx+2 > len(dt)-1 {
+				h = idx + 2
+				l = idx + 2
+				tmp = dt[idx : idx+2]
+			} else {
+				h = idx + 1
+				l = idx + 1
+				tmp = dt[idx-1 : idx+1]
 			}
-			if s.TokenText() == "}" {
-				pairs = append(pairs, fmt.Sprintf("%d,%d", offStack.pop(), s.Position.Column))
+			if tmp == "((" {
+				offStack.push(h)
+			}
+			if tmp == "))" {
+				pairs = append(pairs,
+					fmt.Sprintf("%d,%d", offStack.pop(), l-2))
 			}
 		}
 
@@ -139,7 +148,7 @@ func singleProcessBytes(bytesData []byte) (string, error) {
 			num1, _ := strconv.Atoi(split[0])
 			num2, _ := strconv.Atoi(split[1])
 
-			bytesInside = append(bytesInside, bytesData[num1:num2-1]...)
+			bytesInside = append(bytesInside, bytesData[num1:num2]...)
 		}
 		return string(bytesInside), nil
 	}
@@ -150,20 +159,32 @@ func processBytes(bytesData []byte, components []string) ([]string, error) {
 		return components, nil
 	} else {
 		buff := bytes.NewBuffer(bytesData)
-		var s scanner.Scanner
-		s.Init(buff)
-		pairs := []string{}
+		dt := buff.String()
 
+		var (
+			itm        uint8
+			countOpen  uint8
+			countClose uint8
+			pairs      []string
+		)
 		offStack := new(offsetstack)
+		for idx := 0; idx < len(dt); idx++ {
+			itm = dt[idx]
 
-		var tok rune
-		for ; tok != scanner.EOF; tok = s.Scan() {
-			if s.TokenText() == "{" {
-				offStack.push(s.Position.Column)
+			if itm == '(' {
+				countOpen++
+				if countOpen == 2 {
+					offStack.push(idx + 1)
+					countOpen = 0
+				}
 			}
-			if s.TokenText() == "}" {
-				pairs = append(pairs,
-					fmt.Sprintf("%d,%d", offStack.pop(), s.Position.Column))
+
+			if itm == ')' {
+				countClose++
+				if countClose == 2 {
+					pairs = append(pairs, fmt.Sprintf("%d,%d", offStack.pop(), idx-1))
+					countClose = 0
+				}
 			}
 		}
 
@@ -174,10 +195,14 @@ func processBytes(bytesData []byte, components []string) ([]string, error) {
 			num1, _ := strconv.Atoi(split[0])
 			num2, _ := strconv.Atoi(split[1])
 
-			bytesInside = append(bytesInside, bytesData[num1-1:num2]...)
-			bytesData = append(bytesData[:num1-1], bytesData[num2:]...)
+			bytesInside = append(bytesInside, bytesData[num1:num2]...)
+			bytesData = append(bytesData[:num1-2], bytesData[num2+2:]...)
 
-			components = append(components, string(bytesInside[1:len(bytesInside)-1]))
+			if len(bytesData) < 2 {
+				bytesData = []byte{}
+			}
+
+			components = append(components, string(bytesInside))
 			return processBytes(bytesData, components)
 		}
 	}
@@ -295,7 +320,6 @@ func (t *SqlTyping) processUpdateWithWhere(input string, where string) string {
 	splitCommaSet := strings.Split(input, ",")
 	for _, byComma := range splitCommaSet {
 		pair := strings.Split(byComma, ":")
-		fmt.Println("the pair", pair)
 		switch pair[0] {
 		case "table_name":
 			tableName = convertCamelCaseToSnakeCase(pair[1])
