@@ -7,8 +7,8 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
-	"time"
 	"text/scanner"
+	"time"
 )
 
 func TypeIterator(input interface{}, output interface{}, customValues ...func(interface{}) (interface{}, error)) (err error) {
@@ -299,7 +299,7 @@ func TypeIterator(input interface{}, output interface{}, customValues ...func(in
 		} else {
 			if !checkTypes {
 				ibuff := output.(*bytes.Buffer)
-				ibuff.WriteString("((table_name:" + ityp.Name() + "")
+				ibuff.WriteString("((table_name=" + ityp.Name() + "")
 			}
 
 			for i := 0; i < ival.NumField(); i++ {
@@ -336,7 +336,7 @@ func TypeIterator(input interface{}, output interface{}, customValues ...func(in
 						if fin.Type().String() == "time.Time" {
 							dTime := fin.Interface().(time.Time)
 							if !IsEmpty(dTime) {
-								ibuff.WriteString(fmt.Sprintf(",column_name:%v", fieldName))
+								ibuff.WriteString(fmt.Sprintf(";column_name=%v", fieldName))
 								str := dTime.Format("2006-01-02 03:04:05")
 								err = TypeIterator(str, ibuff, customValues...)
 								if err != nil {
@@ -344,7 +344,7 @@ func TypeIterator(input interface{}, output interface{}, customValues ...func(in
 								}
 							}
 						} else {
-							ibuff.WriteString(fmt.Sprintf(",column_name:%v", fieldName))
+							ibuff.WriteString(fmt.Sprintf(";column_name=%v", fieldName))
 							err = TypeIterator(fin.Interface(), ibuff, customValues...)
 							if err != nil {
 								return

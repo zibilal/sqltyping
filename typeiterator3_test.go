@@ -43,7 +43,7 @@ var strMsg = `{
 	"spot_id": 0,
 	"status": 0,
 	"updated_at": "",
-	"vendor_id": 0
+	"vendor_id": 83
 }`
 
 var strMsg2 = `{
@@ -86,8 +86,6 @@ var strMsg2 = `{
 	"updated_at": "",
 	"vendor_id": 0
 }`
-
-//var dt = `{{table_name:User,column_name:id|bhf1234584,column_name:username|,column_name:first_name|,column_name:last_name|,column_name:email|,column_name:secret_detail{{table_name:SecretDetailEx,column_name:id|11244,column_name:api_secret|,column_name:api_token|}}}}`
 
 func TestStructToStruct(t *testing.T) {
 	t.Log("Testing struct to struct")

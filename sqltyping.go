@@ -61,6 +61,9 @@ func (t *SqlTyping) Typing(input interface{}) ([]string, error) {
 			return []string{}, err
 		}
 		components, err := processBytes(buff.Bytes(), []string{})
+		if err != nil {
+			return []string{}, err
+		}
 
 		results := []string{}
 
@@ -195,6 +198,10 @@ func processBytes(bytesData []byte, components []string) ([]string, error) {
 			num1, _ := strconv.Atoi(split[0])
 			num2, _ := strconv.Atoi(split[1])
 
+			if len(bytesData)-num2 == 3 {
+				num2 += 1
+			}
+
 			bytesInside = append(bytesInside, bytesData[num1:num2]...)
 			bytesData = append(bytesData[:num1-2], bytesData[num2+2:]...)
 
@@ -225,13 +232,13 @@ func (t *SqlTyping) processInput(input string) string {
 }
 
 func (t *SqlTyping) processSelect(input string) string {
-	splitComma := strings.Split(input, ",")
+	splitComma := strings.Split(input, ";")
 	fromClause := ""
 	columns := []string{}
 	wheres := []string{}
 
 	for _, byComma := range splitComma {
-		pair := strings.Split(byComma, ":")
+		pair := strings.Split(byComma, "=")
 		switch pair[0] {
 		case "table_name":
 			fromClause = convertCamelCaseToSnakeCase(pair[1])
@@ -260,9 +267,9 @@ func (t *SqlTyping) processInsert(input string) string {
 	tableName := ""
 	values := []string{}
 
-	splitComma := strings.Split(input, ",")
+	splitComma := strings.Split(input, ";")
 	for _, byComma := range splitComma {
-		pair := strings.Split(byComma, ":")
+		pair := strings.Split(byComma, "=")
 		switch pair[0] {
 		case "table_name":
 			tableName = convertCamelCaseToSnakeCase(pair[1])
@@ -284,9 +291,9 @@ func (t *SqlTyping) processUpdate(input string) string {
 
 	tableName := ""
 
-	splitComma := strings.Split(input, ",")
+	splitComma := strings.Split(input, ";")
 	for _, byComma := range splitComma {
-		pair := strings.Split(byComma, ":")
+		pair := strings.Split(byComma, "=")
 		switch pair[0] {
 		case "table_name":
 			tableName = convertCamelCaseToSnakeCase(pair[1])
@@ -317,9 +324,9 @@ func (t *SqlTyping) processUpdateWithWhere(input string, where string) string {
 	setColumns := []string{}
 	tableName := ""
 
-	splitCommaSet := strings.Split(input, ",")
+	splitCommaSet := strings.Split(input, ";")
 	for _, byComma := range splitCommaSet {
-		pair := strings.Split(byComma, ":")
+		pair := strings.Split(byComma, "=")
 		switch pair[0] {
 		case "table_name":
 			tableName = convertCamelCaseToSnakeCase(pair[1])
@@ -331,10 +338,10 @@ func (t *SqlTyping) processUpdateWithWhere(input string, where string) string {
 		}
 	}
 
-	splitWhereCommaSet := strings.Split(where, ",")
+	splitWhereCommaSet := strings.Split(where, ";")
 	theWhere := []string{}
 	for _, byComma := range splitWhereCommaSet {
-		pair := strings.Split(byComma, ":")
+		pair := strings.Split(byComma, "=")
 		switch pair[0] {
 		case "column_name":
 			splitValue := strings.Split(pair[1], "|")
