@@ -11,6 +11,39 @@ const (
 	failed  = "\u2717"
 )
 
+func TestTypingSelect(t *testing.T) {
+	eventLaunching := struct {
+		ID           uint64 `json:"id"`
+		OrderSplitID string `json:"order_split_id"`
+		UseVoucher   int    `json:"use_voucher"`
+		Status       int    `json:"status"`
+	}{
+		ID: 151175,
+	}
+
+	sqlTyping := NewSqlTyping("SELECT")
+	results, err := sqlTyping.Typing(eventLaunching)
+
+	if err != nil {
+		t.Fatalf("%s expected error nil, got %s", failed, err.Error())
+	} else {
+		t.Logf("%s expected error nil", success)
+	}
+
+	if len(results) != 1 {
+		t.Fatalf("%s expected result have length 1, got %d", failed, len(results))
+	} else {
+		t.Logf("%s expected result have length 1", success)
+	}
+
+	expectedQuery := "SELECT id,order_split_id,use_voucher,status FROM  WHERE id='151175'"
+	if expectedQuery == results[0] {
+		t.Logf("%s expected query == %s", success, expectedQuery)
+	} else {
+		t.Fatalf("%s expected query == %s , got %s", failed, expectedQuery, results[0])
+	}
+}
+
 func TestSqlTyping(t *testing.T) {
 	t.Log("Testing sql typing")
 	{

@@ -246,7 +246,7 @@ func (t *SqlTyping) processSelect(input string) string {
 			splitValue := strings.Split(pair[1], "|")
 			if len(splitValue) == 2 {
 				columns = append(columns, splitValue[0])
-				if splitValue[1] != "" {
+				if splitValue[1] != "" && splitValue[1] != "0" {
 					wheres = append(wheres, fmt.Sprintf("%s='%s'", splitValue[0], splitValue[1]))
 				}
 			}
@@ -299,7 +299,7 @@ func (t *SqlTyping) processUpdate(input string) string {
 			tableName = convertCamelCaseToSnakeCase(pair[1])
 		case "column_name":
 			splitValue := strings.Split(pair[1], "|")
-			if len(splitValue) == 2 && strings.TrimSpace(splitValue[1]) != "" {
+			if len(splitValue) == 2 && strings.TrimSpace(splitValue[1]) != "" && strings.TrimSpace(splitValue[1]) != "0" {
 				if strings.ToLower(splitValue[0]) == "id" || splitValue[0] == t.updateKey {
 					if where == "" {
 						where = fmt.Sprintf(" %s='%s'", splitValue[0], splitValue[1])
