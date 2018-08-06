@@ -345,7 +345,7 @@ func (t *SqlTyping) processUpdateWithWhere(input string, where string) string {
 		switch pair[0] {
 		case "column_name":
 			splitValue := strings.Split(pair[1], "|")
-			if len(splitValue) == 2 && strings.TrimSpace(splitValue[1]) != "" {
+			if len(splitValue) == 2 && strings.TrimSpace(splitValue[1]) != "" && strings.TrimSpace(splitValue[1]) != "0"{
 				theWhere = append(theWhere, fmt.Sprintf("%s='%s'", splitValue[0], splitValue[1]))
 			}
 		}
