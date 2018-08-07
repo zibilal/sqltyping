@@ -18,6 +18,10 @@ func TypeIterator(input interface{}, output interface{}, customValues ...func(in
 	}
 
 	ival := reflect.Indirect(reflect.ValueOf(input))
+	if !ival.IsValid() {
+		return nil
+	}
+
 	ityp := ival.Type()
 	oval := reflect.Indirect(reflect.ValueOf(output))
 	otyp := oval.Type()
@@ -392,13 +396,29 @@ func TypeIterator(input interface{}, output interface{}, customValues ...func(in
 							fout.Set(reflect.ValueOf(str))
 						}
 					} else {
+
 						if fout.IsValid() && fin.IsValid() {
-							iout := reflect.New(fout.Type())
+
+							var atype reflect.Type
+							var abool bool
+							if fout.Kind() == reflect.Ptr {
+								atype = fout.Type().Elem()
+								abool = true
+							} else {
+								atype = fout.Type()
+								abool = false
+							}
+							iout := reflect.New(atype)
+
 							err = TypeIterator(fin.Interface(), iout.Interface(), customValues...)
 							if err != nil {
 								return
 							}
-							fout.Set(iout.Elem())
+							if abool {
+								fout.Set(iout)
+							} else {
+								fout.Set(iout.Elem())
+							}
 						}
 					}
 				}
@@ -413,6 +433,7 @@ func TypeIterator(input interface{}, output interface{}, customValues ...func(in
 
 		return nil
 	case reflect.Slice:
+
 		if !checkTypes {
 			obuff := output.(*bytes.Buffer)
 			for i := 0; i < ival.Len(); i++ {
