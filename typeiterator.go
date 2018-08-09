@@ -2,16 +2,26 @@ package sqltyping
 
 import (
 	"bytes"
+	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/go-sql-driver/mysql"
 	"reflect"
 	"strconv"
 	"strings"
 	"text/scanner"
 	"time"
+	"log"
 )
 
 func TypeIterator(input interface{}, output interface{}, customValues ...func(interface{}) (interface{}, error)) (err error) {
+
+	// it is ok to be panicked
+	defer func() {
+		if r := recover(); r != nil {
+			log.Println("unable to continue iterate value ", fmt.Sprintf("%v", r))
+		}
+	}()
 
 	if input == nil || output == nil {
 		return nil
@@ -335,6 +345,7 @@ func TypeIterator(input interface{}, output interface{}, customValues ...func(in
 					} else {
 						fieldName = ftin.Name
 					}
+
 					if fieldName != "" {
 						fieldName = strings.Replace(fieldName, "\"", "", -1)
 						if fin.Type().String() == "time.Time" {
@@ -346,6 +357,39 @@ func TypeIterator(input interface{}, output interface{}, customValues ...func(in
 								if err != nil {
 									return
 								}
+							}
+						} else if fin.Type().String() == "sql.NullString" {
+							data := fin.Interface().(sql.NullString)
+							ibuff.WriteString(fmt.Sprintf(";column_name=%v", fieldName))
+							err = TypeIterator(data.String, ibuff, customValues...)
+							if err != nil {
+								return
+							}
+						} else if fin.Type().String() == "sql.NullInt64" {
+							data := fin.Interface().(sql.NullInt64)
+							ibuff.WriteString(fmt.Sprintf(";column_name=%v", fieldName))
+							err = TypeIterator(data.Int64, ibuff, customValues...)
+							if err != nil {
+								return
+							}
+						} else if fin.Type().String() == "sql.NullFloat64" {
+							data := fin.Interface().(sql.NullFloat64)
+							ibuff.WriteString(fmt.Sprintf(";column_name=%v", fieldName))
+							err = TypeIterator(data.Float64, ibuff, customValues...)
+							if err != nil {
+								return
+							}
+						} else if fin.Type().String() == "mysql.NullTime" {
+							data := fin.Interface().(mysql.NullTime)
+							ibuff.WriteString(fmt.Sprintf(";column_name=%v", fieldName))
+
+							inputStr := ""
+							if !IsEmpty(data.Time) {
+								inputStr = data.Time.Format("2006-01-02 03:04:05")
+							}
+							err = TypeIterator(inputStr, ibuff, customValues...)
+							if err != nil {
+								return
 							}
 						} else {
 							ibuff.WriteString(fmt.Sprintf(";column_name=%v", fieldName))
@@ -394,6 +438,11 @@ func TypeIterator(input interface{}, output interface{}, customValues ...func(in
 							dTime := fin.Interface().(time.Time)
 							str := dTime.Format("2006-01-02 03:04:05")
 							fout.Set(reflect.ValueOf(str))
+						}
+					} else if fin.Kind() == reflect.Map {
+						err = TypeIterator(fin.Interface(), fout.Interface(), customValues...)
+						if err != nil {
+							return err
 						}
 					} else {
 
@@ -461,7 +510,7 @@ func TypeIterator(input interface{}, output interface{}, customValues ...func(in
 		}
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
 		reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64,
-		reflect.Float32, reflect.Float64, reflect.String:
+		reflect.Float32, reflect.Float64, reflect.String, reflect.Bool:
 
 		if !checkTypes {
 			ibuff := output.(*bytes.Buffer)
@@ -528,6 +577,10 @@ func TypeIterator(input interface{}, output interface{}, customValues ...func(in
 					}
 				case reflect.Float64:
 					if dval, ok := ival.Interface().(float64); ok {
+						oval.Set(reflect.ValueOf(dval))
+					}
+				case reflect.Bool:
+					if dval, ok := ival.Interface().(bool); ok {
 						oval.Set(reflect.ValueOf(dval))
 					}
 				}

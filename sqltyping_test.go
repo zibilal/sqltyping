@@ -2,6 +2,8 @@ package sqltyping
 
 import (
 	"bytes"
+	"database/sql"
+	"github.com/go-sql-driver/mysql"
 	"testing"
 	"time"
 )
@@ -362,6 +364,75 @@ func TestSimpleUpdateQuery(t *testing.T) {
 			t.Logf("%s expected query == %s", success, expectedQuery)
 		} else {
 			t.Fatalf("%s expected query == %s, got %s", failed, expectedQuery, query)
+		}
+	}
+}
+
+func TestNullSql(t *testing.T) {
+	t.Log("Testing select null sql")
+	{
+		data := struct {
+			Name    sql.NullString  `db:"name"`
+			EmailAD sql.NullString  `db:"email_ad"`
+			Salary  sql.NullFloat64 `db:"salary"`
+			DateNow mysql.NullTime  `db:"date_now"`
+		}{
+			Name: sql.NullString{
+				String: "Testing",
+			},
+		}
+
+		typing := NewSqlTyping(SelectQuery)
+		query, err := typing.Typing(data)
+
+		if err != nil {
+			t.Fatalf("%s expected error nil, got %s", failed, err.Error())
+		} else {
+			t.Logf("%s expected error nil", success)
+		}
+
+		if len(query) != 1 {
+			t.Fatalf("%s expected generate one query, got %d", failed, len(query))
+		} else {
+			t.Logf("%s expected generate one query", success)
+		}
+
+		expectedQuery := "SELECT name,email_ad,salary,date_now FROM  WHERE name='Testing'"
+
+		if query[0] == expectedQuery {
+			t.Logf("%s expected query %s", success, expectedQuery)
+		} else {
+			t.Fatalf("%s expected query %s, got %s", failed, expectedQuery, query[0])
+		}
+	}
+
+	t.Log("Testing update null sql")
+	{
+		data := struct {
+			Name    sql.NullString  `db:"name"`
+			EmailAD sql.NullString  `db:"email_ad"`
+			Salary  sql.NullFloat64 `db:"salary"`
+			DateNow mysql.NullTime  `db:"date_now"`
+		}{}
+
+		typing := NewSqlTyping(UpdateQuery)
+		query, err := typing.TypingUpdateWithWhereClause(data, struct {
+			Name string
+		}{
+			"Test Name",
+		})
+
+		if err != nil {
+			t.Fatalf("%s expected error nil, got %s", failed, err.Error())
+		} else {
+			t.Logf("%s expected error nil", success)
+		}
+
+		expectedQuery := `UPDATE  SET name='',email_ad='',salary='0',date_now='' WHERE Name='Test Name'`
+		if expectedQuery == query {
+			t.Logf("%s expected query %s", success, expectedQuery)
+		} else {
+			t.Logf("%s expected query %s, got %s", success, expectedQuery, query)
 		}
 	}
 }
