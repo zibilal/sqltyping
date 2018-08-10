@@ -80,8 +80,8 @@ func (t *SqlTyping) Typing(input interface{}) ([]string, error) {
 }
 
 func (t *SqlTyping) TypingUpdateWithWhereClause(input interface{}, query interface{}) (string, error) {
-	ival := reflect.ValueOf(input)
-	ique := reflect.ValueOf(query)
+	ival := reflect.Indirect(reflect.ValueOf(input))
+	ique := reflect.Indirect(reflect.ValueOf(query))
 
 	if ival.Kind() != reflect.Struct || ique.Kind() != reflect.Struct {
 		return "", errors.New("please provide both input and query as variable of type struct")
