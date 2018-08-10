@@ -386,10 +386,10 @@ func TypeIterator(input interface{}, output interface{}, customValues ...func(in
 							inputStr := ""
 							if !IsEmpty(data.Time) {
 								inputStr = data.Time.Format("2006-01-02 03:04:05")
-							}
-							err = TypeIterator(inputStr, ibuff, customValues...)
-							if err != nil {
-								return
+								err = TypeIterator(inputStr, ibuff, customValues...)
+								if err != nil {
+									return
+								}
 							}
 						} else {
 							ibuff.WriteString(fmt.Sprintf(";column_name=%v", fieldName))
