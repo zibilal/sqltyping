@@ -514,7 +514,14 @@ func TypeIterator(input interface{}, output interface{}, customValues ...func(in
 
 		if !checkTypes {
 			ibuff := output.(*bytes.Buffer)
-			ibuff.WriteString(fmt.Sprintf("|%v", ival.Interface()))
+			if ival.Kind() == reflect.String {
+				tmp := ival.Interface().(string)
+				tmp = strings.Replace(tmp, "(", "[", -1)
+				tmp = strings.Replace(tmp, ")", "]", -1)
+				ibuff.WriteString(fmt.Sprintf("|%s", tmp))
+			} else {
+				ibuff.WriteString(fmt.Sprintf("|%v", ival.Interface()))
+			}
 		} else {
 			if oval.Kind() == ival.Kind() {
 				oval.Set(ival)

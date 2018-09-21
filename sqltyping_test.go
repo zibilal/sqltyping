@@ -397,7 +397,7 @@ func TestNullSql(t *testing.T) {
 			t.Logf("%s expected generate one query", success)
 		}
 
-		expectedQuery := "SELECT name,email_ad,salary,date_now FROM  WHERE name='Testing'"
+		expectedQuery := "SELECT name,email_ad,salary FROM  WHERE name='Testing'"
 
 		if query[0] == expectedQuery {
 			t.Logf("%s expected query %s", success, expectedQuery)
