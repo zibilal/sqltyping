@@ -10,6 +10,40 @@ import (
 	"time"
 )
 
+func TestIsEmpty(t *testing.T) {
+	t.Log("Test IsEmpty function")
+	{
+		v1 := 12
+		v2 := ""
+		var err error
+		var v3 interface{}
+
+		if !IsEmpty(v1) {
+			t.Logf("%s expected v1 not empty", success)
+		} else {
+			t.Fatalf("%s expected v1 not empty, got empty", failed)
+		}
+
+		if IsEmpty(v2) {
+			t.Logf("%s expected v2 is empty", success)
+		} else {
+			t.Fatalf("%s expected v2 is empty, got %s", failed, v2)
+		}
+
+		if IsEmpty(err) {
+			t.Logf("%s expected err is empty", success)
+		} else {
+			t.Fatalf("%s expected err is empty, got %+v", failed, err)
+		}
+
+		if IsEmpty(v3) {
+			t.Logf("%s expected v3 is empty", success)
+		} else {
+			t.Fatalf("%s expected v3 is empty, got %_v", failed, v3)
+		}
+	}
+}
+
 func TestSimpleTest(t *testing.T) {
 	t.Log("Simple struct to struct testing")
 	{

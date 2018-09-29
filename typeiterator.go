@@ -616,5 +616,5 @@ func TypeIterator(input interface{}, output interface{}, customValues ...func(in
 // IsEmpty is an helper function to decide whether a value is empty or not
 // This function is mean to be used to decide whether a struct variable is empty or not
 func IsEmpty(t interface{}) bool {
-	return reflect.DeepEqual(t, reflect.Zero(reflect.TypeOf(t)).Interface())
+	return t == nil || reflect.DeepEqual(t, reflect.Zero(reflect.TypeOf(t)).Interface())
 }
