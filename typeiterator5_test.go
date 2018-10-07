@@ -16,11 +16,13 @@ func TestTypeIterator_AccepSqlNulls(t *testing.T) {
 			Rate      sql.NullFloat64
 			Level     sql.NullInt64
 			CreatedAt mysql.NullTime
+			Status    sql.NullInt64
 		}{
 			Name:      sql.NullString{String: "Test Name"},
 			Rate:      sql.NullFloat64{Float64: 12.56},
 			Level:     sql.NullInt64{Int64: 15},
 			CreatedAt: mysql.NullTime{Time: time.Now()},
+			Status:    sql.NullInt64{Int64: 5},
 		}
 
 		output := struct {
@@ -28,6 +30,7 @@ func TestTypeIterator_AccepSqlNulls(t *testing.T) {
 			Rate      float64
 			Level     int64
 			CreatedAt time.Time
+			Status    uint8
 		}{}
 
 		err := TypeIterator(input, &output)
@@ -53,11 +56,13 @@ func TestTypeIterator_OutputSqlNulls(t *testing.T) {
 			Name      string
 			Rate      float64
 			Level     int64
+			Status    uint8
 			CreatedAt time.Time
 		}{
 			Name:      "Test Name",
 			Rate:      12.56,
 			Level:     12,
+			Status:    2,
 			CreatedAt: time.Now(),
 		}
 
@@ -65,6 +70,7 @@ func TestTypeIterator_OutputSqlNulls(t *testing.T) {
 			Name      sql.NullString
 			Rate      sql.NullFloat64
 			Level     sql.NullInt64
+			Status    sql.NullInt64
 			CreatedAt mysql.NullTime
 		}{}
 
