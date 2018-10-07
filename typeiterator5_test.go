@@ -53,12 +53,14 @@ func TestTypeIterator_OutputSqlNulls(t *testing.T) {
 	t.Log("Testing for giving data to SqlNull type variants")
 	{
 		input := struct {
+			ID        string
 			Name      string
 			Rate      float64
 			Level     int64
 			Status    uint8
 			CreatedAt time.Time
 		}{
+			ID:        "00dasfa0001",
 			Name:      "Test Name",
 			Rate:      12.56,
 			Level:     12,
@@ -67,6 +69,7 @@ func TestTypeIterator_OutputSqlNulls(t *testing.T) {
 		}
 
 		output := struct {
+			ID        sql.NullInt64
 			Name      sql.NullString
 			Rate      sql.NullFloat64
 			Level     sql.NullInt64

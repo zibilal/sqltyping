@@ -687,9 +687,6 @@ func TypeIterator(input interface{}, output interface{}, customValues ...func(in
 						oval.Set(reflect.ValueOf(dval))
 					}
 				}
-			} else {
-				err = fmt.Errorf("input type %T cannot by set in output of type %T", ival.Interface(), oval.Interface())
-				return
 			}
 		}
 
