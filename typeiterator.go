@@ -438,6 +438,10 @@ func TypeIterator(input interface{}, output interface{}, customValues ...func(in
 							dTime := fin.Interface().(time.Time)
 							str := dTime.Format("2006-01-02 03:04:05")
 							fout.Set(reflect.ValueOf(str))
+						} else if fout.Type().String() == "mysql.NullTime" {
+							dTime := fin.Interface().(time.Time)
+							dNullTime := mysql.NullTime{Time:dTime}
+							fout.Set(reflect.ValueOf(dNullTime))
 						}
 					} else if fin.Type().String() == "sql.NullString" {
 						if fout.Kind() == reflect.String {
@@ -557,6 +561,36 @@ func TypeIterator(input interface{}, output interface{}, customValues ...func(in
 		} else {
 			if oval.Kind() == ival.Kind() {
 				oval.Set(ival)
+			} else if ival.Kind() == reflect.String && oval.Type().String() == "sql.NullString" {
+				outString := sql.NullString{String: ival.Interface().(string)}
+				oval.Set(reflect.ValueOf(outString))
+			} else if ival.Kind() == reflect.Int64 && oval.Type().String() == "sql.NullInt64" {
+				outInt64 := sql.NullInt64{Int64:ival.Interface().(int64)}
+				oval.Set(reflect.ValueOf(outInt64))
+			} else if ival.Kind() == reflect.Int32 && oval.Type().String() == "sql.NullInt64" {
+				tmp := ival.Interface().(int32)
+				outInt64 := sql.NullInt64{Int64:int64(tmp)}
+				oval.Set(reflect.ValueOf(outInt64))
+			} else if ival.Kind() == reflect.Int16 && oval.Type().String() == "sql.NullInt64" {
+				tmp := ival.Interface().(int16)
+				outInt64 := sql.NullInt64{Int64:int64(tmp)}
+				oval.Set(reflect.ValueOf(outInt64))
+			} else if ival.Kind() == reflect.Int8 && oval.Type().String() == "sql.NullInt64" {
+				tmp := ival.Interface().(int8)
+				outInt64 := sql.NullInt64{Int64:int64(tmp)}
+				oval.Set(reflect.ValueOf(outInt64))
+			} else if ival.Kind() == reflect.Int && oval.Type().String() == "sql.NullInt64" {
+				tmp := ival.Interface().(int)
+				outInt64 := sql.NullInt64{Int64:int64(tmp)}
+				oval.Set(reflect.ValueOf(outInt64))
+			} else if ival.Kind() == reflect.Float64 && oval.Type().String() == "sql.NullFloat64" {
+				tmp := ival.Interface().(float64)
+				outFloat64 := sql.NullFloat64{Float64:tmp}
+				oval.Set(reflect.ValueOf(outFloat64))
+			} else if ival.Kind() == reflect.Float32 && oval.Type().String() == "sql.NullFloat32" {
+				tmp := ival.Interface().(float32)
+				outFloat64 := sql.NullFloat64{Float64:float64(tmp)}
+				oval.Set(reflect.ValueOf(outFloat64))
 			} else if ival.Kind() == reflect.Float64 {
 				switch oval.Kind() {
 				case reflect.Int:
