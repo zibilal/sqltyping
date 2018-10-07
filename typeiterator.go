@@ -439,6 +439,38 @@ func TypeIterator(input interface{}, output interface{}, customValues ...func(in
 							str := dTime.Format("2006-01-02 03:04:05")
 							fout.Set(reflect.ValueOf(str))
 						}
+					} else if fin.Type().String() == "sql.NullString" {
+						if fout.Kind() == reflect.String {
+							data := fin.Interface().(sql.NullString)
+							fout.Set(reflect.ValueOf(data.String))
+						}
+					} else if fin.Type().String() == "sql.NullInt64" {
+						data := fin.Interface().(sql.NullInt64)
+						switch fout.Interface().(type) {
+						case int64:
+							fout.Set(reflect.ValueOf(data.Int64))
+						case int32:
+							fout.Set(reflect.ValueOf(int32(data.Int64)))
+						case int16:
+							fout.Set(reflect.ValueOf(int16(data.Int64)))
+						case int8:
+							fout.Set(reflect.ValueOf(int8(data.Int64)))
+						case int:
+							fout.Set(reflect.ValueOf(int(data.Int64)))
+						}
+					} else if fin.Type().String() == "sql.NullFloat64" {
+						data := fin.Interface().(sql.NullFloat64)
+						switch fout.Interface().(type) {
+						case float64:
+							fout.Set(reflect.ValueOf(data.Float64))
+						case float32:
+							fout.Set(reflect.ValueOf(float32(data.Float64)))
+						}
+					} else if fin.Type().String() == "mysql.NullTime" {
+						if fout.Type().String() == "time.Time" {
+							data := fin.Interface().(mysql.NullTime)
+							fout.Set(reflect.ValueOf(data.Time))
+						}
 					} else if fin.Kind() == reflect.Map {
 						err = TypeIterator(fin.Interface(), fout.Interface(), customValues...)
 						if err != nil {

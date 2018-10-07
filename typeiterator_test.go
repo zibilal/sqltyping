@@ -39,7 +39,7 @@ func TestIsEmpty(t *testing.T) {
 		if IsEmpty(v3) {
 			t.Logf("%s expected v3 is empty", success)
 		} else {
-			t.Fatalf("%s expected v3 is empty, got %_v", failed, v3)
+			t.Fatalf("%s expected v3 is empty, got %v", failed, v3)
 		}
 	}
 }
