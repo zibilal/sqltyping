@@ -103,6 +103,31 @@ func TypeIterator(input interface{}, output interface{}, customValues ...func(in
 						foval.Set(reflect.ValueOf(ifloat32))
 					} else if ifloat64, ok := mival.Interface().(float64); ok && foval.Kind() == reflect.Float64 {
 						foval.Set(reflect.ValueOf(ifloat64))
+					} else if iffloat64, ok := mival.Interface().(float64);ok {
+						switch foval.Kind() {
+						case reflect.Int64:
+							foval.Set(reflect.ValueOf(int64(iffloat64)))
+						case reflect.Int32:
+							foval.Set(reflect.ValueOf(int32(iffloat64)))
+						case reflect.Int16:
+							foval.Set(reflect.ValueOf(int16(iffloat64)))
+						case reflect.Int8:
+							foval.Set(reflect.ValueOf(int8(iffloat64)))
+						case reflect.Int:
+							foval.Set(reflect.ValueOf(int(iffloat64)))
+						case reflect.Uint64:
+							foval.Set(reflect.ValueOf(uint64(iffloat64)))
+						case reflect.Uint32:
+							foval.Set(reflect.ValueOf(uint32(iffloat64)))
+						case reflect.Uint16:
+							foval.Set(reflect.ValueOf(uint16(iffloat64)))
+						case reflect.Uint8:
+							foval.Set(reflect.ValueOf(uint8(iffloat64)))
+						case reflect.Uint:
+							foval.Set(reflect.ValueOf(uint(iffloat64)))
+						case reflect.Float32:
+							foval.Set(reflect.ValueOf(float32(iffloat64)))
+						}
 					} else if foval.Type().String() == mival.Type().String() {
 						foval.Set(mival)
 					} else if mival.Kind() == reflect.Interface {
