@@ -4,6 +4,7 @@
 vendor
 microservice_order
 Gopkg.lock
+Gopkg.toml
 **/app.yml
 **/app.yaml
 **/*.lock

@@ -14,6 +14,8 @@ import (
 	"log"
 )
 
+const DefaultDateLayout = "2006-01-02 15:04:05"
+
 func TypeIterator(input interface{}, output interface{}, customValues ...func(interface{}) (interface{}, error)) (err error) {
 
 	// it is ok to be panicked
@@ -377,7 +379,7 @@ func TypeIterator(input interface{}, output interface{}, customValues ...func(in
 							dTime := fin.Interface().(time.Time)
 							if !IsEmpty(dTime) {
 								ibuff.WriteString(fmt.Sprintf(";column_name=%v", fieldName))
-								str := dTime.Format("2006-01-02 15:04:05")
+								str := dTime.Format(DefaultDateLayout)
 								err = TypeIterator(str, ibuff, customValues...)
 								if err != nil {
 									return
@@ -410,7 +412,7 @@ func TypeIterator(input interface{}, output interface{}, customValues ...func(in
 
 							inputStr := ""
 							if !IsEmpty(data.Time) {
-								inputStr = data.Time.Format("2006-01-02 15:04:05")
+								inputStr = data.Time.Format(DefaultDateLayout)
 								err = TypeIterator(inputStr, ibuff, customValues...)
 								if err != nil {
 									return
@@ -461,7 +463,7 @@ func TypeIterator(input interface{}, output interface{}, customValues ...func(in
 							fout.Set(fin)
 						} else if fout.Kind() == reflect.String {
 							dTime := fin.Interface().(time.Time)
-							str := dTime.Format("2006-01-02 03:04:05")
+							str := dTime.Format(DefaultDateLayout)
 							fout.Set(reflect.ValueOf(str))
 						} else if fout.Type().String() == "mysql.NullTime" {
 							dTime := fin.Interface().(time.Time)
