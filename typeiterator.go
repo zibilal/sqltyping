@@ -377,7 +377,7 @@ func TypeIterator(input interface{}, output interface{}, customValues ...func(in
 							dTime := fin.Interface().(time.Time)
 							if !IsEmpty(dTime) {
 								ibuff.WriteString(fmt.Sprintf(";column_name=%v", fieldName))
-								str := dTime.Format("2006-11-02 15:04:05")
+								str := dTime.Format("2006-01-02 15:04:05")
 								err = TypeIterator(str, ibuff, customValues...)
 								if err != nil {
 									return
@@ -410,7 +410,7 @@ func TypeIterator(input interface{}, output interface{}, customValues ...func(in
 
 							inputStr := ""
 							if !IsEmpty(data.Time) {
-								inputStr = data.Time.Format("2006-11-02 15:04:05")
+								inputStr = data.Time.Format("2006-01-02 15:04:05")
 								err = TypeIterator(inputStr, ibuff, customValues...)
 								if err != nil {
 									return
