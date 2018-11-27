@@ -105,6 +105,8 @@ func TypeIterator(input interface{}, output interface{}, customValues ...func(in
 						foval.Set(reflect.ValueOf(ifloat32))
 					} else if ifloat64, ok := mival.Interface().(float64); ok && foval.Kind() == reflect.Float64 {
 						foval.Set(reflect.ValueOf(ifloat64))
+					} else if itimestamp, ok := mival.Interface().(time.Time); ok && foval.Type().String() == "time.Time" {
+						foval.Set(reflect.ValueOf(itimestamp))
 					} else if iffloat64, ok := mival.Interface().(float64);ok {
 						switch foval.Kind() {
 						case reflect.Int64:
