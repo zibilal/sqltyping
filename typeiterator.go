@@ -380,7 +380,7 @@ func TypeIterator(input interface{}, output interface{}, customValues ...func(in
 						if fin.Type().String() == "time.Time" {
 							dTime := fin.Interface().(time.Time)
 							if !IsEmpty(dTime) {
-								ibuff.WriteString(fmt.Sprintf(";column_name=%v", fieldName))
+								ibuff.WriteString(fmt.Sprintf("\\column_name=%v", fieldName))
 								str := dTime.Format(DefaultDateLayout)
 								err = TypeIterator(str, ibuff, customValues...)
 								if err != nil {
@@ -389,28 +389,28 @@ func TypeIterator(input interface{}, output interface{}, customValues ...func(in
 							}
 						} else if fin.Type().String() == "sql.NullString" {
 							data := fin.Interface().(sql.NullString)
-							ibuff.WriteString(fmt.Sprintf(";column_name=%v", fieldName))
+							ibuff.WriteString(fmt.Sprintf("\\column_name=%v", fieldName))
 							err = TypeIterator(data.String, ibuff, customValues...)
 							if err != nil {
 								return
 							}
 						} else if fin.Type().String() == "sql.NullInt64" {
 							data := fin.Interface().(sql.NullInt64)
-							ibuff.WriteString(fmt.Sprintf(";column_name=%v", fieldName))
+							ibuff.WriteString(fmt.Sprintf("\\column_name=%v", fieldName))
 							err = TypeIterator(data.Int64, ibuff, customValues...)
 							if err != nil {
 								return
 							}
 						} else if fin.Type().String() == "sql.NullFloat64" {
 							data := fin.Interface().(sql.NullFloat64)
-							ibuff.WriteString(fmt.Sprintf(";column_name=%v", fieldName))
+							ibuff.WriteString(fmt.Sprintf("\\column_name=%v", fieldName))
 							err = TypeIterator(data.Float64, ibuff, customValues...)
 							if err != nil {
 								return
 							}
 						} else if fin.Type().String() == "mysql.NullTime" {
 							data := fin.Interface().(mysql.NullTime)
-							ibuff.WriteString(fmt.Sprintf(";column_name=%v", fieldName))
+							ibuff.WriteString(fmt.Sprintf("\\column_name=%v", fieldName))
 
 							inputStr := ""
 							if !IsEmpty(data.Time) {
@@ -421,7 +421,7 @@ func TypeIterator(input interface{}, output interface{}, customValues ...func(in
 								}
 							}
 						} else {
-							ibuff.WriteString(fmt.Sprintf(";column_name=%v", fieldName))
+							ibuff.WriteString(fmt.Sprintf("\\column_name=%v", fieldName))
 							err = TypeIterator(fin.Interface(), ibuff, customValues...)
 							if err != nil {
 								return
@@ -593,6 +593,7 @@ func TypeIterator(input interface{}, output interface{}, customValues ...func(in
 				tmp := ival.Interface().(string)
 				tmp = strings.Replace(tmp, "(", "[", -1)
 				tmp = strings.Replace(tmp, ")", "]", -1)
+				SanitizeString(&tmp)
 				ibuff.WriteString(fmt.Sprintf("|%s", tmp))
 			} else {
 				ibuff.WriteString(fmt.Sprintf("|%v", ival.Interface()))

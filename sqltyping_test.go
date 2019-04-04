@@ -81,7 +81,7 @@ func TestSqlTyping(t *testing.T) {
 func TestSqlTypingProcessSelect(t *testing.T) {
 	t.Log("Testing SqlTyping.processSelect")
 	{
-		dataInput := "table_name=User;column_name=id|bhf1234584;column_name=username|;column_name=first_name|;column_name=last_name|;column_name=email|;column_name=secret_detail"
+		dataInput := "table_name=User\\column_name=id|bhf1234584\\column_name=username|\\column_name=first_name|\\column_name=last_name|\\column_name=email|\\column_name=secret_detail"
 		expectedQuery := `SELECT id,username,first_name,last_name,email FROM user WHERE id='bhf1234584'`
 		typing := NewSqlTyping("SELECT")
 		result := typing.processSelect(dataInput)
@@ -102,7 +102,7 @@ func TestSqlTypingProcessSelect(t *testing.T) {
 func TestSqlTypingProcessInsert(t *testing.T) {
 	t.Log("Testing SqlTyping.processInsert")
 	{
-		dataInput := "table_name=User;column_name=id|bhf1234584;column_name=username|example;column_name=first_name|first;column_name=last_name|last;column_name=email|first.last@example.com;column_name=secret_detail"
+		dataInput := "table_name=User\\column_name=id|bhf1234584\\column_name=username|example\\column_name=first_name|first\\column_name=last_name|last\\column_name=email|first.last@example.com\\column_name=secret_detail"
 		expectedQuery := `INSERT INTO user (id,username,first_name,last_name,email) VALUES ('bhf1234584','example','first','last','first.last@example.com')`
 		typing := NewSqlTyping("INSERT")
 		result := typing.processInsert(dataInput)
@@ -120,7 +120,7 @@ func TestSqlTypingProcessInsert(t *testing.T) {
 	}
 	t.Log("Testing SqlTyping.processInsert with empty id")
 	{
-		dataInput := "table_name=User;column_name=id|;column_name=username|example;column_name=first_name|first;column_name=last_name|last;column_name=email|first.last@example.com;column_name=secret_detail"
+		dataInput := "table_name=User\\column_name=id|\\column_name=username|example\\column_name=first_name|first\\column_name=last_name|last\\column_name=email|first.last@example.com\\column_name=secret_detail"
 		expectedQuery := `INSERT INTO user (username,first_name,last_name,email) VALUES ('example','first','last','first.last@example.com')`
 		typing := NewSqlTyping("INSERT")
 		result := typing.processInsert(dataInput)
@@ -141,7 +141,7 @@ func TestSqlTypingProcessInsert(t *testing.T) {
 func TestSqlTypingProcessUpdate(t *testing.T) {
 	t.Log("Testing SqlTyping.processUpdate")
 	{
-		dataInput := "table_name=User;column_name=id|bhf1234584;column_name=username|example;column_name=first_name|first;column_name=last_name|last;column_name=email|first.last@example.com;column_name=secret_detail"
+		dataInput := "table_name=User\\column_name=id|bhf1234584\\column_name=username|example\\column_name=first_name|first\\column_name=last_name|last\\column_name=email|first.last@example.com\\column_name=secret_detail"
 		expectedQuery := `UPDATE user SET first_name='first',last_name='last',email='first.last@example.com' WHERE id='bhf1234584' AND username='example'`
 		typing := NewSqlTyping("UPDATE")
 		typing.SetUpdateKey("username")
@@ -160,7 +160,7 @@ func TestSqlTypingProcessUpdate(t *testing.T) {
 	}
 	t.Log("Testing SqlTyping.processUpdate, with some empty data")
 	{
-		dataInput := "table_name=User;column_name=id|;column_name=username|example;column_name=first_name|;column_name=last_name|last;column_name=email|first.last@example.com;column_name=secret_detail"
+		dataInput := "table_name=User\\column_name=id|\\column_name=username|example\\column_name=first_name|\\column_name=last_name|last\\column_name=email|first.last@example.com\\column_name=secret_detail"
 		expectedQuery := `UPDATE user SET username='example',last_name='last',email='first.last@example.com'`
 		typing := NewSqlTyping("UPDATE")
 		result := typing.processUpdate(dataInput)
@@ -179,7 +179,7 @@ func TestSqlTypingProcessUpdate(t *testing.T) {
 
 	t.Log("Testing SqlTyping.processUpdate, with decided where column name")
 	{
-		dataInput := "table_name=User;column_name=id|;column_name=username|example;column_name=first_name|;column_name=last_name|last;column_name=email|first.last@example.com;column_name=secret_detail"
+		dataInput := "table_name=User\\column_name=id|\\column_name=username|example\\column_name=first_name|\\column_name=last_name|last\\column_name=email|first.last@example.com\\column_name=secret_detail"
 		expectedQuery := `UPDATE user SET last_name='last',email='first.last@example.com' WHERE username='example'`
 		typing := NewSqlTyping("UPDATE")
 		typing.SetUpdateKey("username")
@@ -202,7 +202,7 @@ func TestTescan(t *testing.T) {
 
 	t.Log("Testing text scan")
 	{
-		var data = `((table_name=User;column_name=id|bhf1234584;column_name=username|;column_name=first_name|;column_name=last_name|;column_name=email|;column_name=secret_detail((table_name=SecretDetailEx;column_name=id|11244;column_name=api_secret|;column_name=api_token|))))`
+		var data = `((table_name=User\\column_name=id|bhf1234584\\column_name=username|\\column_name=first_name|\\column_name=last_name|\\column_name=email|\\column_name=secret_detail((table_name=SecretDetailEx\\column_name=id|11244\\column_name=api_secret|\\column_name=api_token|))))`
 
 		bytesData := []byte(data)
 		buff := bytes.NewBuffer(bytesData)
@@ -221,9 +221,11 @@ func TestTescan(t *testing.T) {
 			t.Logf("%s expected length of components == 2", success)
 		}
 
-		expectedFirst := "table_name=SecretDetailEx;column_name=id|11244;column_name=api_secret|;column_name=api_token|"
-		expectedSecond := "table_name=User;column_name=id|bhf1234584;column_name=username|;column_name=first_name|;column_name=last_name|;column_name=email|;column_name=secret_detail"
+		expectedFirst := "table_name=SecretDetailEx\\\\column_name=id|11244\\\\column_name=api_secret|\\\\column_name=api_token|"
+		expectedSecond := "table_name=User\\\\column_name=id|bhf1234584\\\\column_name=username|\\\\column_name=first_name|\\\\column_name=last_name|\\\\column_name=email|\\\\column_name=secret_detail"
 
+		t.Log(components[0])
+		t.Log(components[1])
 		if expectedFirst == components[0] {
 			t.Logf("%s expected first component == %s", success, expectedFirst)
 		} else {
@@ -242,7 +244,7 @@ func TestTescan(t *testing.T) {
 func TestScanWithStructOfSlice(t *testing.T) {
 	t.Log("Testing text scan")
 	{
-		var data = `((table_name=OrderEx;column_name=Id|o123;column_name=Updated|2018-06-17 03:43:33;column_name=Created|2018-06-17 03:43:33;column_name=Status|OrderCreated;column_name=Items((table_name=OrderItem;column_name=Id|itm123;column_name=ItemName|XL 2 Giga;column_name=Price|150000))((table_name=OrderItem;column_name=Id|itm124;column_name=ItemName|XL 5 Giga;column_name=Price|300000))))`
+		var data = `((table_name=OrderEx\\column_name=Id|o123\\column_name=Updated|2018-06-17 03:43:33\\column_name=Created|2018-06-17 03:43:33\\column_name=Status|OrderCreated\\column_name=Items((table_name=OrderItem\\column_name=Id|itm123\\column_name=ItemName|XL 2 Giga\\column_name=Price|150000))((table_name=OrderItem\\column_name=Id|itm124\\column_name=ItemName|XL 5 Giga\\column_name=Price|300000))))`
 		bytesData := []byte(data)
 		components, err := processBytes(bytesData, []string{})
 
