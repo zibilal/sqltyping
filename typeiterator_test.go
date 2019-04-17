@@ -73,6 +73,31 @@ func TestSimpleTest(t *testing.T) {
 	}
 }
 
+func TestTypeWithTime(t *testing.T) {
+	t.Log("Testing map[strign]interface{} with string time")
+	{
+		output := struct {
+			Name string `json:"name"`
+			DateBirth time.Time `json:"date_birth"`
+		} {}
+		input := make(map[string]interface{})
+		input["name"] = "Test Second"
+		input["date_birth"] = "1977-12-11 12:21:50"
+
+		err := TypeIterator(input, &output)
+		if err != nil {
+			t.Fatalf("%s expected error nil, got %s", failed, err.Error())
+		}
+
+		if IsEmpty(output) {
+			t.Fatalf("%s expected output not empty", failed)
+		}
+
+		b, _ := json.MarshalIndent(output, "", "\t")
+		t.Logf("%s Result: %s", success, string(b))
+	}
+}
+
 func TestTypeIterator(t *testing.T) {
 	t.Log("Testing type iterator")
 	{

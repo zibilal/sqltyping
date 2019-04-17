@@ -14,7 +14,11 @@ import (
 	"log"
 )
 
-const DefaultDateLayout = "2006-01-02 15:04:05"
+const (
+	DefaultDateLayout = "2006-01-02 15:04:05"
+	AcceptedDateLayouts = "2006-01-02 15:04:05"
+)
+
 
 func TypeIterator(input interface{}, output interface{}, customValues ...func(interface{}) (interface{}, error)) (err error) {
 
@@ -91,6 +95,18 @@ func TypeIterator(input interface{}, output interface{}, customValues ...func(in
 
 					if istr, ok := mival.Interface().(string); ok && foval.Kind() == reflect.String {
 						foval.Set(reflect.ValueOf(istr))
+					} else if istr, ok := mival.Interface().(string); ok && foval.Type().String() == "time.Time" {
+						dlayout := strings.Split(AcceptedDateLayouts, ",")
+						if len(dlayout) > 0 {
+							for _, l := range dlayout {
+								t , err := time.Parse(l, istr)
+								if err != nil {
+									break
+								} else {
+									foval.Set(reflect.ValueOf(t))
+								}
+							}
+						}
 					} else if iint, ok := mival.Interface().(int); ok && foval.Kind() == reflect.Int {
 						foval.Set(reflect.ValueOf(iint))
 					} else if iint8, ok := mival.Interface().(int8); ok && foval.Kind() == reflect.Int8 {
