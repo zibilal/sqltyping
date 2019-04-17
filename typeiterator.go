@@ -177,10 +177,12 @@ func TypeIterator(input interface{}, output interface{}, customValues ...func(in
 								}
 								foval.Set(mSlice)
 							} else {
-								pval := reflect.Indirect(mival.Elem())
-								err = TypeIterator(pval.Interface(), foval.Addr().Interface(), customValues...)
-								if err != nil {
-									return
+								if mival.Interface() != nil {
+									pval := reflect.Indirect(mival.Elem())
+									err = TypeIterator(pval.Interface(), foval.Addr().Interface(), customValues...)
+									if err != nil {
+										return
+									}
 								}
 							}
 						}
