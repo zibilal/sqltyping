@@ -147,6 +147,8 @@ func TypeIterator(input interface{}, output interface{}, customValues ...func(in
 							foval.Set(reflect.ValueOf(uint(iffloat64)))
 						case reflect.Float32:
 							foval.Set(reflect.ValueOf(float32(iffloat64)))
+						case reflect.Interface:
+							foval.Set(reflect.ValueOf(mival.Interface()))
 						}
 					} else if foval.Type().String() == mival.Type().String() {
 						foval.Set(mival)
